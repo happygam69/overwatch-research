@@ -35,6 +35,13 @@ only each chunk's first/last), and reclassifies each big gap: `giant` (own tail)
 `0x1406c5b10->0x1406c5fd0` (1,111 B) a hole, but chunk 0535's `FUN_1406c5ba0(...)` makes it
 an offcut; `0x1406ac0e0->0x1406ad5e0` stays a hole (0 references corpus-wide).
 
+`window reach` is the far-window watch list (ledger 53). For every entry, the highest address its
+own body stamps — labels, `(ram,0x…)`, literals, but not `FUN_`/`func_0x…` calls — past its
+declared `size=`, minus its entry address; stamps above the corpus's highest entry (`index.json`)
+are data, not `.text`, and are ignored. An entry with >= 3 such stamps is a window (one or two
+stray literals are not); the three furthest are printed. A window's stamps point at unread
+regions, never at this range's coverage.
+
 A pair whose next entry starts at or below `addr + size` is an overlap, not a gap, and is
 only counted. Chunk entry lists are globally address-sorted and unique, so an address
 strictly inside a gap has no decompiled entry anywhere: the references above are missing
@@ -94,6 +101,13 @@ def scan(lo, hi):
     return ents, own
 
 
+def text_hi():
+    """Highest entry address in the corpus: `.text` ends at or below it (index.json is truth)."""
+    with open(INDEX) as f:
+        return max(int(re.match(r'// ([0-9a-f]{16})_', c['last']).group(1), 16)
+                   for c in json.load(f)['chunks'])
+
+
 def report(lo, hi):
     ents, own = scan(lo, hi)
     entries = sorted(ents)
@@ -129,10 +143,20 @@ def report(lo, hi):
         buckets[cls.split('+')[0]].append((a, b, d))
         detail.append((a, b, d, cls, reach, lost))
 
+    # far-window watch list: own non-call stamps past size=, .text band only (ledger 53)
+    hi_text = text_hi()
+    win = []
+    for a in entries:
+        far = [v for v in own[a] if 'call' not in own[a][v] and a + ents[a] <= v <= hi_text]
+        if len(far) >= 3:
+            assert min(far) >= a + ents[a] and max(far) <= hi_text
+            win.append((max(far) - a, a, max(far), len(far)))
+    win.sort(reverse=True)
+
     span = entries[-1] - entries[0]
     size_sum = sum(ents[a] for a in entries)
     print('== gap_report chunks %04d-%04d ==' % (lo, hi))
-    print('range: 0x%x-0x%x   entries=%d  span=%d  sum_size=%d (%.1f%%)'
+    print('range: 0x%x-0x%x   entries=%d  span=%d  sum_size (binary)=%d (%.1f%%)'
           % (entries[0], entries[-1], len(entries), span, size_sum, 100.0 * size_sum / span))
     print('gaps: %d of %d pairs (next entry inside the previous body: %d overlaps)'
           % (len(gaps), len(pairs), overlaps))
@@ -149,6 +173,8 @@ def report(lo, hi):
     for cls in ('giant', 'offcut', 'hole'):   # 'giant+offcut' counts under giant
         b = buckets[cls]
         print('  %-8s %5d gaps %10d B' % (cls, len(b), sum(g[2] for g in b)))
+    print('  window reach: %s' % (' | '.join(
+        '0x%x +%d B -> 0x%x (%d stamps)' % (a, d, r, n) for d, a, r, n in win[:3]) or '-'))
     return ents, own, gaps, buckets, entries, detail
 
 

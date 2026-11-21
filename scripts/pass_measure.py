@@ -13,10 +13,12 @@ those facts as one object plus a `digest` (16 hex) a record may cite instead of 
 block; the digest covers the range facts only, so it does not move when state.json's
 `max_text` does (`corpus_max` is printed alongside but excluded from the hash).
 
-The block's `largest:` / `corpus max:` lines rank functions by the declared `(NNNN B)`
+The block's `largest (text):` / `corpus max:` lines rank functions by the declared `(NNNN B)`
 decompiled-text size and compare the range's biggest against the corpus maximum kept in
 state.json (`--maxscan` seeds/refreshes it; `--init` wipes it, so re-run `--maxscan` after
 a rebuild), so "is this the corpus maximum" is read, not hand-grepped (ledgers 37/38/47).
+`sum_size (binary)` sums the binary `size=` header field instead; on stripped window bodies
+text exceeds binary, so the two are not comparable.
 A NEW max is a claim to verify against overlapping windows, not a result:
 `scripts/crossref.py <addr>` lists every chunk that names the same body. The block prints
 that check for the range max as a `max refs:` line (thread 20, ledgers 47/49), so every
@@ -283,9 +285,9 @@ def fmt_out(m, corpus=None):
     L = []
     A = L.append
     A('== pass_measure chunks %04d-%04d ==' % (lo, hi))
-    A('range: %s-%s   files=%d  sum_size=%d  disk=%d (post-strip)'
+    A('range: %s-%s   files=%d  sum_size (binary)=%d  disk=%d (post-strip)'
       % (m['first'], m['last'], m['files'], m['sum_size'], m['disk']))
-    A('largest: %s' % (' | '.join('%s %d B (chunk %04d)' % (name, d, n)
+    A('largest (text): %s' % (' | '.join('%s %d B (chunk %04d)' % (name, d, n)
                                  for d, _a, name, n in m['big'][:3]) or '-'))
     A(fmt_max(m, corpus))
     A(fmt_refs(m))

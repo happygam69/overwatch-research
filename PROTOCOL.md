@@ -33,9 +33,12 @@ resume range. Regenerate it after every `--update`; `state.json` is only read.
 padding (≤16 B) / `size=` (≤1 KiB) / **giant** tail / **offcut** body / **hole**, with byte
 totals, so a record quotes it instead of classifying gaps by hand. `--offcuts` sweeps all
 chunks for mentions inside each >1 KiB gap and diffs them against every decompiled entry, so
-a reference from an unread chunk reclassifies a range-only "hole" as an offcut body. Read-only.
-`scripts/pass_measure.py` → the canonical measurement; its block carries the `largest:` /
-`corpus max:` lines (declared `(NNNN B)` text size) against `state.json.max_text`, and
+a reference from an unread chunk reclassifies a range-only "hole" as an offcut body. The
+`window reach:` line (ledger 53) lists the three entries whose own non-`call` stamps reach
+furthest past their `size=` (≥3 stamps, `.text` band only) — the far-window watch list. Read-only.
+`scripts/pass_measure.py` → the canonical measurement; its block carries the `largest (text):` /
+`corpus max:` lines (declared `(NNNN B)` text size, not `sum_size (binary)`, which sums the binary
+`size=` fields) against `state.json.max_text`, and
 `--maxscan` ranks the whole corpus and seeds that field, so "is this the corpus maximum" is
 quoted, never hand-grepped (ledgers 37/38/47/48). The `max refs:` line is the standing
 corpus-wide crossref of the range max. `--json` prints those facts as one canonical object
