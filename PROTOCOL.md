@@ -70,7 +70,8 @@ the script, not a remembered chunk count. You have a
    bodies against the corpus maximum), never a substitute for reading. For the record's gap
    caveat run `python scripts/gap_report.py <first> <last>`; add `--offcuts` when a gap could
    be an offcut body rather than a hole (it sees chunks outside the range). For the pass's
-   decoded XOR-8 UI names run `python scripts/strscan.py --x8 <first> <last>`.
+   decoded XOR-8 UI names run `python scripts/strscan.py --x8 <first> <last>`; it scans one
+   chunk past `last` (`+ look-ahead`), so rows tagged `chunk_<last+1>` belong to the next pass.
    A `corpus max: NEW …` line is a claim, not a result: read the block's `max refs:` line
    (or run `scripts/crossref.py <addr>`) — no other function naming it means a single entry,
    any other function means check for an overlapping window (ledger 47).

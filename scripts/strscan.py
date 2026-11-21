@@ -16,6 +16,10 @@ each decrypt loop and resolves `base + 8`, the record header `strpool.tsv` is ke
 (the pool already carries `poolmap.tsv`'s kind/hash/name columns), so one line per page is
 exact. Pages whose text is not printable have no row and print `(no pool row)`.
 
+One chunk past `last` is scanned when it exists: a band is shared across chunks, so a page
+the last chunk's functions reference can first decode in the next chunk's loop. Those rows
+keep their own `chunk_` number and the header says `+ look-ahead`.
+
 The trailing summary says why the rest did not resolve. Most addresses in a chunk are
 never strings: `.text` mentions are code, and `.data BSS` is the section's virtual tail
 (virtual size 0xCC43BC against 0x333600 file-backed bytes) holding zero-initialised
@@ -50,11 +54,12 @@ def page_base(arg):
 
 
 def x8_report(lo, hi):
-    """One line per XOR-8 page referenced in chunks lo..hi; first sighting wins."""
+    """One line per XOR-8 page referenced in chunks lo..hi (+1 look-ahead); first sighting wins."""
     rows = {r[0]: r[1:] for r in load()}
     chunks = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "chunks")
+    stop = hi + 1 if os.path.exists(os.path.join(chunks, "chunk_%04d.txt" % (hi + 1))) else hi
     seen = {}
-    for n in range(lo, hi + 1):
+    for n in range(lo, stop + 1):
         with open(os.path.join(chunks, "chunk_%04d.txt" % n), encoding="utf-8",
                   errors="replace") as fh:
             body = fh.read()
@@ -68,7 +73,8 @@ def x8_report(lo, hi):
             seen.setdefault(base, (n, heads[i][1] if i >= 0 else 0))
 
     named = sum(1 for base in seen if base + 8 in rows)
-    print("== XOR-8 pages, chunks %04d-%04d ==" % (lo, hi))
+    print("== XOR-8 pages, chunks %04d-%04d%s =="
+          % (lo, hi, " + look-ahead" if stop > hi else ""))
     for base in sorted(seen):
         n, func = seen[base]
         row = rows.get(base + 8)
