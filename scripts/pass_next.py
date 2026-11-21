@@ -8,8 +8,10 @@ usage (from work/flood/):
 
 Fills chunks in entry order while they fit under the cap, so the pass is size-targeted, not
 a fixed count: post-strip chunks run 9-580 KB, not 140 KB. The printed range never exceeds
---max KiB: the chunk that would cross the cap is left for the next pass. Read-only —
-state.json is read for next_chunk, never written; --update advances it.
+--max KiB: the chunk that would cross the cap is left for the next pass. state.json is only
+read (for next_chunk; pass_measure.py --update advances it); the printed block is also
+written to NEXT.txt, so the pass's resume range is a file a reader greps, not prose to keep
+in sync in CODE_MAP.md. Regenerate it after every --update.
 """
 import json
 import os
@@ -20,6 +22,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 FLOOD = os.path.dirname(HERE)
 DEFAULT_MAX = 1200             # KiB, post-strip
 ADDR = re.compile(r'// ([0-9a-f]{16})_')
+NEXT = os.path.join(FLOOD, 'NEXT.txt')
+HEAD = '# scripts/pass_next.py output - generated, rerun after pass_measure --update; do not edit'
 
 
 def die(msg):
@@ -99,33 +103,42 @@ def main():
             max_bytes - total, hi + 1, chunks[hi + 1]['bytes'])
     else:
         tail = 'corpus ends here'
-    print('== next pass ==')
-    print('chunks  %04d..%04d (%d)  chunks/chunk_%04d.txt .. chunks/chunk_%04d.txt'
-          % (lo, hi, hi - lo + 1, lo, hi))
-    print('bytes   {:,} post-strip (max {:,} KiB = {:,} B; {})'
-          .format(total, max_kb, max_bytes, tail))
-    print('text    %s-%s' % (first, last))
-    print('measure python scripts/pass_measure.py %d %d' % (lo, hi))
-    print('gaps    python scripts/gap_report.py %d %d' % (lo, hi))
-    print('record  ranges/%s-%s.md' % (first, last))
-    print('next    state.json.next_chunk becomes %d after --update' % (hi + 1))
+    out = []
+
+    def say(s):                       # printed and saved to NEXT.txt
+        out.append(s)
+        print(s)
+
+    say('== next pass ==')
+    say('chunks  %04d..%04d (%d)  chunks/chunk_%04d.txt .. chunks/chunk_%04d.txt'
+        % (lo, hi, hi - lo + 1, lo, hi))
+    say('bytes   {:,} post-strip (max {:,} KiB = {:,} B; {})'
+        .format(total, max_kb, max_bytes, tail))
+    say('text    %s-%s' % (first, last))
+    say('measure python scripts/pass_measure.py %d %d' % (lo, hi))
+    say('gaps    python scripts/gap_report.py %d %d' % (lo, hi))
+    say('record  ranges/%s-%s.md' % (first, last))
+    say('next    state.json.next_chunk becomes %d after --update' % (hi + 1))
 
     if lo != next_chunk:
         if lo < next_chunk:
-            print('note    start %d is BEFORE state.json.next_chunk %d: %d chunk(s) already '
-                  'counted (do not --update them again)' % (lo, next_chunk, next_chunk - lo))
+            say('note    start %d is BEFORE state.json.next_chunk %d: %d chunk(s) already '
+                'counted (do not --update them again)' % (lo, next_chunk, next_chunk - lo))
         else:
-            print('note    start %d is AFTER state.json.next_chunk %d: %d chunk(s) between them '
-                  'not counted yet' % (lo, next_chunk, lo - next_chunk))
+            say('note    start %d is AFTER state.json.next_chunk %d: %d chunk(s) between them '
+                'not counted yet' % (lo, next_chunk, lo - next_chunk))
     else:
-        print('note    start %d agrees with state.json.next_chunk' % lo)
+        say('note    start %d agrees with state.json.next_chunk' % lo)
 
     bad = ['chunk_%04d' % i for i in range(lo, hi + 1)
            if chunks[i]['bytes'] != os.path.getsize(os.path.join(FLOOD, 'chunks',
                                                                  'chunk_%04d.txt' % i))]
     if bad:
-        print('warning index.json size mismatch on %d chunk(s), first %s; rerun the strip/index '
-              'build before trusting these bytes' % (len(bad), bad[0]))
+        say('warning index.json size mismatch on %d chunk(s), first %s; rerun the strip/index '
+            'build before trusting these bytes' % (len(bad), bad[0]))
+
+    with open(NEXT, 'w', encoding='utf-8', newline='\n') as f:
+        f.write(HEAD + '\n' + '\n'.join(out) + '\n')
 
 
 if __name__ == '__main__':

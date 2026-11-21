@@ -2,19 +2,25 @@
 
 usage (from work/flood/):
   python scripts/pass_measure.py START END           # measure only, prints the block
+  python scripts/pass_measure.py START END --json    # read-only: the same facts as JSON + digest
   python scripts/pass_measure.py START END --update  # measure + merge into state.json
   python scripts/pass_measure.py --init A B          # rebuild state.json from chunks A..B
   python scripts/pass_measure.py --maxscan           # rank the whole corpus by text size, seed state.json
 
 Output is the reproducible 'headline numbers' block for the pass record: quote it
-verbatim; hand-typed numbers in records are not acceptable (PROTOCOL.md).
+verbatim; hand-typed numbers in records are not acceptable (PROTOCOL.md). `--json` prints
+those facts as one object plus a `digest` (16 hex) a record may cite instead of pasting the
+block; the digest covers the range facts only, so it does not move when state.json's
+`max_text` does (`corpus_max` is printed alongside but excluded from the hash).
 
 The block's `largest:` / `corpus max:` lines rank functions by the declared `(NNNN B)`
 decompiled-text size and compare the range's biggest against the corpus maximum kept in
 state.json (`--maxscan` seeds/refreshes it; `--init` wipes it, so re-run `--maxscan` after
 a rebuild), so "is this the corpus maximum" is read, not hand-grepped (ledgers 37/38/47).
 A NEW max is a claim to verify against overlapping windows, not a result:
-`scripts/crossref.py <addr>` lists every chunk that names the same body.
+`scripts/crossref.py <addr>` lists every chunk that names the same body. The block prints
+that check for the range max as a `max refs:` line (thread 20, ledgers 47/49), so every
+pass carries it without a separate command.
 
 Classification per function (first match wins):
   reg      calls func_0x1421cd360 (registration)
@@ -26,6 +32,7 @@ Classification per function (first match wins):
   other    everything else
 """
 import collections
+import hashlib
 import json
 import os
 import re
@@ -176,7 +183,22 @@ def measure(lo, hi):
             m['calls']['atexit'] += body.count('atexit(')
         prev_class = None  # runs do not span chunk boundaries
     m['big'].sort(reverse=True)
+    m['maxrefs'] = max_refs(m)
     return m
+
+
+def max_refs(m):
+    """Corpus-wide mentions of the range max: a second entry naming it is a window/cascade signal."""
+    if not m['big']:
+        return {'name': None, 'def': [], 'others': [], 'other_count': 0}
+    _d, addr, name, _n = m['big'][0]
+    import crossref                       # imports this module; safe only after it is loaded
+    found, defs = crossref.scan(crossref.pattern('0x' + addr[2:]), range(crossref.n_chunks()))
+    others = sorted([n, '0x%x' % a, nm, c]
+                    for n, rows in found.items() for a, nm, c in rows
+                    if '0x%x' % a != addr)
+    return {'name': name, 'def': sorted({n for n, _a, _nm in defs}),
+            'others': others[:10], 'other_count': len(others)}
 
 
 def largest(lo, hi, top):
@@ -197,12 +219,60 @@ def fmt_max(m, corpus):
         return 'corpus max: unknown - seed it: python scripts/pass_measure.py --maxscan'
     if top and top[0] > corpus['bytes']:
         return ('corpus max: NEW %s %d B (chunk %04d); was %s %d B (chunk %04d) -'
-                ' rule out an overlapping window (ledger 47) via scripts/crossref.py before recording'
+                ' rule out an overlapping window (ledger 47) via the max refs line below'
                 % (top[2], top[0], top[3], corpus['name'], corpus['bytes'], corpus['chunk']))
     return ('corpus max: %s %d B (chunk %04d)%s'
             % (corpus['name'], corpus['bytes'], corpus['chunk'],
                '  [range max = %.1f%% of it]' % (100.0 * top[0] / corpus['bytes'])
                if top else ''))
+
+
+def fmt_refs(m):
+    """The range max's corpus-wide references: its own entries vs other functions naming it."""
+    r = m['maxrefs']
+    if not r['name']:
+        return 'max refs: -'
+    head = 'max refs: %s def chunk %s, ' % (
+        r['name'], ','.join('%04d' % n for n in r['def']) or '-')
+    if not r['other_count']:
+        return head + 'no other fn names it'
+    rows = ', '.join('%04d %s %s x%d' % tuple(o) for o in r['others'][:3])
+    more = '' if r['other_count'] <= 3 else ' +%d' % (r['other_count'] - 3)
+    return head + '%d other fn(s) name it: %s%s' % (r['other_count'], rows, more)
+
+
+def facts(m, lo, hi):
+    """Everything a record cites, canonical for hashing (no state-derived fields)."""
+    return {
+        'chunks': [lo, hi],
+        'range': [m['first'], m['last']],
+        'files': m['files'], 'sum_size': m['sum_size'], 'disk': m['disk'],
+        'largest': [[name, d, n] for d, _a, name, n in m['big'][:3]],
+        'max_refs': m['maxrefs'],
+        'classes': dict(m['classes']),
+        'sizes': [[k, v] for k, v in m['sizes'].most_common(24)],
+        'calls': dict(m['calls']),
+        'registrations': {
+            'calls': len(m['reg_hashes']), 'distinct': len(set(m['reg_hashes'])),
+            'argc_bad': m['reg_argc_bad'],
+            'flags': dict(m['reg_flags']), 'align': dict(m['reg_align']),
+            'sizes': dict(m['reg_sizes']), 'tokens': dict(m['reg_tokens'].most_common(6)),
+            'outputs': [min(m['reg_outs']), max(m['reg_outs'])] if m['reg_outs'] else None},
+        'decryptors': {d: {'uses': sum(m['dec_hashes'][d].values()),
+                           'top': dict(m['dec_hashes'][d].most_common(8))}
+                       for d in ('d4f30', 'd4f70')},
+        'records': m['records'],
+        'roots': dict(m['roots'].most_common(12)),
+        'ciphertext_band': [min(m['ctxt']), max(m['ctxt'])] if m['ctxt'] else None,
+        'targets': dict(m['targets'].most_common(12)),
+        'runs': m['runs'],
+    }
+
+
+def mdigest(f):
+    """16-hex provenance hash over the citable facts (corpus_max excluded: it moves with state)."""
+    blob = json.dumps(f, sort_keys=True, separators=(',', ':'))
+    return hashlib.sha256(blob.encode()).hexdigest()[:16]
 
 
 def census(counter, top=10, fmt=str):
@@ -218,6 +288,7 @@ def fmt_out(m, corpus=None):
     A('largest: %s' % (' | '.join('%s %d B (chunk %04d)' % (name, d, n)
                                  for d, _a, name, n in m['big'][:3]) or '-'))
     A(fmt_max(m, corpus))
+    A(fmt_refs(m))
     A('classes: %s' % ' '.join('%s=%d' % (k, v) for k, v in m['classes'].most_common()))
     A('size census: %s' % ' '.join('%dx%d' % (k, v) for k, v in m['sizes'].most_common(24)))
     A('calls: cd360 x%d  1426c3bcc x%d  canary x%d  d4f30 x%d  d4f70 x%d  d4fb0 x%d  '
@@ -302,8 +373,17 @@ def main():
         mode = 'init'
     else:
         mode = 'update' if '--update' in argv else 'measure'
+    if '--json' in argv and mode != 'measure':
+        sys.exit('pass_measure: --json is read-only; run --update/--init as a separate call')
 
     m = measure(lo, hi)
+    if '--json' in argv:
+        f = facts(m, lo, hi)
+        assert mdigest(f) == mdigest(json.loads(json.dumps(f))), 'facts are not canonical'
+        state = load_state() if os.path.exists(STATE) else {}
+        out = dict(f, digest=mdigest(f), corpus_max=state.get('max_text'))
+        print(json.dumps(out, indent=1, sort_keys=True))
+        return
     state = {'passes': [], 'totals': collections.Counter(), 'reg_hashes': set(),
              'record_rows': [], 'targets': set(), 'max_text': None}
     if os.path.exists(STATE) and mode != 'init':

@@ -1000,3 +1000,29 @@ Rows 1–15 are in the Coverage table above; passes 23+ remain in `CODE_MAP.md`.
 | 20 (10-chunk) | `0161`–`0170` | `0x1403858a0`–`0x1403ac1e0` | 522 | 144,458 | `ranges/0x1403858a0-0x1403ac1e0.md` |
 | 21 (11-chunk) | `0171`–`0181` | `0x1403ac370`–`0x1403e7590` | 771 | 214,614 | `ranges/0x1403ac370-0x1403e7590.md` |
 | 22 (11-chunk) | `0182`–`0192` | `0x1403e7730`–`0x1404191d0` | 630 | 181,579 | `ranges/0x1403e7730-0x1404191d0.md` |
+
+## Corrections archive (ledger items moved out of `CODE_MAP.md` at pass 35 to keep it ≤300 lines; still binding)
+
+1. **`{id,hash}` records match 75/75, not 74/75.** Pass 15's "unmatched" hash `0x3fd91271` (id `0x35`) is the registration hash of `FUN_140290c50` (chunk `0114`); pass 16 adds 23 rows, pass 17 adds 45.
+2. **Sorted-insert builders: 280 cumulative** after pass 26 (249→+31). Use `state.json`.
+3. **Nested-atexit builders: 261 cumulative**; shapes 526/542/558-B; initializer families grow per pass. The `atexit` counter rose to 313 in pass 29 but that call is a settings-id static, not a builder (ledger 25).
+4. **Provenance caveat:** passes 1–15 records state counts without a quoting script (their ad-hoc scripts were not kept). All passes' `files`/Σ `size=` are reproduced by `scripts/pass_measure.py`.
+6. **There is no shutdown table and no "move".** Shutdown rows are per-object global slots scattered by the linker (`0x1438e…`, `0x143ce7…`, `0x143e5e/6…`, `0x143c3ab20/ba40`, `0x143e92/94…`, `0x144101c90`, `0x144123ab0–af0`, `0x144126320–378`, `0x14412cd58/da0`, `0x14412e078–0b0`, `0x144136068–0a8`, `0x14398bc98–d58`); the code addresses each absolutely.
+9. **`record-hash = registration-hash` is a rule; the two `state.json` `matched:false` rows are stale, not exceptions** (`FUN_14036bb60`/chunk `0156` registers `0x39091531`, the hash of record ids `0x3e`/`xcb`).
+10. **The 178-B third field is an alias registration hash, not a flag.** Row layout = `{id, hash, alias}`; most third fields are 0.
+11. **Corrections 9 is closed by direct evidence** — see item 9; keep the two stale flags untouched.
+12. **Roots alternate; "static-root era over" is retired.** Pass 26 roots sit almost entirely on registration outputs; static `0x143cf/d…` roots are the minority. Regime is per-block, not a timeline.
+14. **The sorted-insert middle call is the ordinary pre-step slot.** Not a second decrypt stage.
+16. **Zero hash reuse is conditional.** Pass 27's 4 plaintext rows (`"teStructuredData"` ×2, `"MirrorData"`, `"TrackedData"`) trip the check legitimately. Do not "repair" `state.json`.
+17. **The static `0x143cf…/0x143d…` band is RTTI type_info**, not "class roots"; the band's content label is superseded (root wording in 12 still holds for builder roots).
+18. **`0x143b79598` is a XOR pad table.** Pass 27's "config block" wording is refined: `local = 0x<const>; func_0x140543xx0(&local)` decodes a *compile-time* masked pointer; the result is XORed with `*(u64*)(_DAT_143b79598 + n)`. ~40 sites in pass 28.
+19. **Name ciphertext pages extended** (pass 28): `0x1438493c8–0x1438497f8`, `0x1438499a0–0x14384a3bc`, `0x14384a428–0x14384ad54`, `0x143a16e38/58/70`; layout as the registry (key@+0, len@+8 `&0xffffff`, latch high byte, payload@+0xc).
+21. **`canary x32` in pass 28 is not a builder canary.** It counts `FUN_1426c3d40` cookie calls plus the hotfix literal `"canary"` (`FUN_141bb9610(...,"canary")`). No builder exists in that range.
+25. **`atexit` 312→313 (pass 29) is not a builder.** The one call is `FUN_1405924c0`'s TLS static `{0x75,0x77}` + `atexit(&LAB_142f01c90)`. Nested-atexit builders stay 261.
+28. **MSVC concurrency bodies are in `.text`**: `0x140586870`/`0x1405868c0` are `Concurrency::details::UMSFreeThreadProxyFactory` scalar-deleting destructors (`Library Function - Single Match`).
+29. **The XOR-8 name pages are already decoded, in this repo** (`strpool.tsv`, anchored at page base + 8; query via `scripts/strlookup.py` address/`--band`/`--grep`, `scripts/strscan.py` chunk→pages). `Unknown` rows carry their stripped identity (`STRPOOL_UNKNOWN.md`); the 1,185 residual `Unknown` rows are genuine literal placeholders.
+35. **The event-bus registrar is three-variant** (listen `mask|2` / announce `mask|1` / `FUN_142e04e00` pair); `FUN_14064cdd0` is the std::map<u32 id→0xb0 descriptor> behind `FUN_142e029b0`.
+37. **`FUN_140669ee0` (100,672-B text) was the largest function in the corpus** until pass 33; its return-address stamps reach `0x1406a1703` — see 38. As a *corpus* claim it is false: superseded by 48.
+38. **`FUN_140681360` (101,443-B text) is the new pass-range maximum** (pass 33: the VFX keyframe-evaluation engine). Supersedes 37; superseded by 48.
+40. **Thread 6 closed**: `FUN_141c2a030` runs with negative min (−100.0f/−360.0f) at `FUN_1406796c0`; `FUN_141c2bfd0`'s third arg is a **storage slot** (byte-flag addr `0x1438544ac-af`, `0x143b87d4c`, `0x143b87f50`).
+42. **Entity update is a state machine** (`FUN_14068c310`): fn-ptr table `0x143854720` = `{FUN_14068a880, FUN_14068b340, FUN_14068ae00}`, state at `ent+0x60`, ≤0x2711 iterations.

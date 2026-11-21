@@ -27,7 +27,8 @@ That index is the source of truth for coverage; never count by eye.
 totals, all registration hashes, all `{id,hash}` rows. Never hand-accumulate numbers.
 `scripts/pass_next.py` → range picker: start chunk (or `state.json.next_chunk`) + `--max` KiB
 cap (default 1200) → printed chunk range, `.text` range, `pass_measure.py` command, record
-path. Read-only.
+path — and writes the same block to `NEXT.txt`, the file `CODE_MAP.md` points at for the
+resume range. Regenerate it after every `--update`; `state.json` is only read.
 `scripts/gap_report.py` → gap classifier, same chunk range in: every inter-entry gap as
 padding (≤16 B) / `size=` (≤1 KiB) / **giant** tail / **offcut** body / **hole**, with byte
 totals, so a record quotes it instead of classifying gaps by hand. `--offcuts` sweeps all
@@ -36,11 +37,16 @@ a reference from an unread chunk reclassifies a range-only "hole" as an offcut b
 `scripts/pass_measure.py` → the canonical measurement; its block carries the `largest:` /
 `corpus max:` lines (declared `(NNNN B)` text size) against `state.json.max_text`, and
 `--maxscan` ranks the whole corpus and seeds that field, so "is this the corpus maximum" is
-quoted, never hand-grepped (ledgers 37/38/47).
+quoted, never hand-grepped (ledgers 37/38/47/48). The `max refs:` line is the standing
+corpus-wide crossref of the range max. `--json` prints those facts as one canonical object
+plus a 16-hex `digest` over the range facts only (`corpus_max` is printed but not hashed, so
+the digest survives a later `--maxscan`), so a record can cite the digest instead of pasting
+the block. Read-only; `--json` cannot be combined with `--update`/`--init`.
 `scripts/crossref.py <symbol>` → corpus-wide cross-reference: the defining entry, every
 function that mentions the symbol with its chunk and hit count, and the compact chunk list;
 a short bare hex run (`143b94`) matches as a prefix, so a band is one query. This is the
-"grep forward for X" open-thread query (threads 2, 9, 11, 17). Read-only.
+"grep forward for X" open-thread query (threads 2, 9, 11, 17); `pass_measure.py` runs it for
+the range max of every pass (`max refs:`). Read-only.
 
 (Not to be confused with `../flood.py` — the byte-budget corpus streamer with
 `../flood_cursor.txt`, a separate mechanism.)
@@ -62,16 +68,20 @@ the script, not a remembered chunk count. You have a
    caveat run `python scripts/gap_report.py <first> <last>`; add `--offcuts` when a gap could
    be an offcut body rather than a hole (it sees chunks outside the range). For the pass's
    decoded XOR-8 UI names run `python scripts/strscan.py --x8 <first> <last>`.
-   A `corpus max: NEW …` line is a claim, not a result: run `scripts/crossref.py <addr>`
-   first, to rule out an overlapping decompilation window (ledger 47).
+   A `corpus max: NEW …` line is a claim, not a result: read the block's `max refs:` line
+   (or run `scripts/crossref.py <addr>`) — no other function naming it means a single entry,
+   any other function means check for an overlapping window (ledger 47).
 3. Write one record: `ranges/<first>-<last>.md`, named by the `.text` addresses covered
    (from the script's `range:` line or `index.json`). **Quote the script output verbatim**
-   in the record's headline-numbers section; do not retype its numbers.
+   in the record's headline-numbers section, or cite its `--json` digest
+   (`measure digest <16 hex>`) plus fields quoted from the same `--json` run; do not retype
+   its numbers.
 4. Run `python scripts/pass_measure.py <first> <last> --update` to merge the pass into
    `state.json`, then update `CODE_MAP.md`: coverage row, corrections/synthesis only if
-   something structural changed, open threads, "Next pass" section — in that section name
-   only the resume chunk; the length comes from `pass_next.py`. Cumulative
-   numbers in `CODE_MAP.md` come from `state.json` totals — never hand-added.
+   something structural changed, open threads, next-pass watch items. The resume range is
+   `NEXT.txt`: regenerate it with `python scripts/pass_next.py` after `--update`, never
+   hand-edit it. Cumulative numbers in `CODE_MAP.md` come from `state.json` totals — never
+   hand-added.
 
 A pass may read ahead of the census (the script's classes are call-shape heuristics;
 novel constructs will land in `other`): anything the script cannot classify must be read
