@@ -30,7 +30,17 @@ cap (default 1200) → printed chunk range, `.text` range, `pass_measure.py` com
 path. Read-only.
 `scripts/gap_report.py` → gap classifier, same chunk range in: every inter-entry gap as
 padding (≤16 B) / `size=` (≤1 KiB) / **giant** tail / **offcut** body / **hole**, with byte
-totals, so a record quotes it instead of classifying gaps by hand. Read-only.
+totals, so a record quotes it instead of classifying gaps by hand. `--offcuts` sweeps all
+chunks for mentions inside each >1 KiB gap and diffs them against every decompiled entry, so
+a reference from an unread chunk reclassifies a range-only "hole" as an offcut body. Read-only.
+`scripts/pass_measure.py` → the canonical measurement; its block carries the `largest:` /
+`corpus max:` lines (declared `(NNNN B)` text size) against `state.json.max_text`, and
+`--maxscan` ranks the whole corpus and seeds that field, so "is this the corpus maximum" is
+quoted, never hand-grepped (ledgers 37/38/47).
+`scripts/crossref.py <symbol>` → corpus-wide cross-reference: the defining entry, every
+function that mentions the symbol with its chunk and hit count, and the compact chunk list;
+a short bare hex run (`143b94`) matches as a prefix, so a band is one query. This is the
+"grep forward for X" open-thread query (threads 2, 9, 11, 17). Read-only.
 
 (Not to be confused with `../flood.py` — the byte-budget corpus streamer with
 `../flood_cursor.txt`, a separate mechanism.)
@@ -47,10 +57,13 @@ the script, not a remembered chunk count. You have a
 1. Read every chunk in the printed range completely (or stop at a stated boundary and say so).
 2. Run `python scripts/pass_measure.py <first> <last>` from this repo root and read its output
    alongside the chunks — it is the index to what was read (headline numbers, class and
-   zone skeleton, registration/decrypt censuses, record-hash matches), never a
-   substitute for reading. For the record's gap caveat run
-   `python scripts/gap_report.py <first> <last>`; for the pass's decoded XOR-8 UI names run
-   `python scripts/strscan.py --x8 <first> <last>`.
+   zone skeleton, registration/decrypt censuses, record-hash matches, the range's largest
+   bodies against the corpus maximum), never a substitute for reading. For the record's gap
+   caveat run `python scripts/gap_report.py <first> <last>`; add `--offcuts` when a gap could
+   be an offcut body rather than a hole (it sees chunks outside the range). For the pass's
+   decoded XOR-8 UI names run `python scripts/strscan.py --x8 <first> <last>`.
+   A `corpus max: NEW …` line is a claim, not a result: run `scripts/crossref.py <addr>`
+   first, to rule out an overlapping decompilation window (ledger 47).
 3. Write one record: `ranges/<first>-<last>.md`, named by the `.text` addresses covered
    (from the script's `range:` line or `index.json`). **Quote the script output verbatim**
    in the record's headline-numbers section; do not retype its numbers.

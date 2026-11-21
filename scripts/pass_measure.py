@@ -4,9 +4,17 @@ usage (from work/flood/):
   python scripts/pass_measure.py START END           # measure only, prints the block
   python scripts/pass_measure.py START END --update  # measure + merge into state.json
   python scripts/pass_measure.py --init A B          # rebuild state.json from chunks A..B
+  python scripts/pass_measure.py --maxscan           # rank the whole corpus by text size, seed state.json
 
 Output is the reproducible 'headline numbers' block for the pass record: quote it
 verbatim; hand-typed numbers in records are not acceptable (PROTOCOL.md).
+
+The block's `largest:` / `corpus max:` lines rank functions by the declared `(NNNN B)`
+decompiled-text size and compare the range's biggest against the corpus maximum kept in
+state.json (`--maxscan` seeds/refreshes it; `--init` wipes it, so re-run `--maxscan` after
+a rebuild), so "is this the corpus maximum" is read, not hand-grepped (ledgers 37/38/47).
+A NEW max is a claim to verify against overlapping windows, not a result:
+`scripts/crossref.py <addr>` lists every chunk that names the same body.
 
 Classification per function (first match wins):
   reg      calls func_0x1421cd360 (registration)
@@ -37,15 +45,20 @@ CTXT = re.compile(r'\bDAT_1438[0-9a-f]{6}\b')
 FUNREF = re.compile(r'\bFUN_[0-9a-f]{9,12}\b')
 
 
+def chunk_path(n):
+    return os.path.join(FLOOD, 'chunks', 'chunk_%04d.txt' % n)
+
+
 def functions(text):
-    """Yield (addr, declared_bytes, size, body) per function."""
+    """Yield (addr, name, declared_bytes, size, body) per function."""
     parts = re.split(r'(?m)^(?=// [0-9a-f]{16}_)', text)
     for p in parts:
         m = HDR.match(p)
         if not m:
             continue
         mm = META.search(p)
-        yield '0x%x' % int(m.group(1), 16), int(m.group(3)), int(mm.group(2)) if mm else 0, p
+        yield ('0x%x' % int(m.group(1), 16), m.group(2), int(m.group(3)),
+               int(mm.group(2)) if mm else 0, p)
 
 
 def classify(body):
@@ -80,14 +93,15 @@ def measure(lo, hi):
         'dec_hashes': collections.defaultdict(collections.Counter),
         'records': [], 'roots': collections.Counter(), 'ctxt': [],
         'first': None, 'last': None, 'runs': [], 'targets': collections.Counter(),
+        'big': [],
     }
     prev_class = None
     for n in range(lo, hi + 1):
-        with open(os.path.join(FLOOD, 'chunks', 'chunk_%04d.txt' % n), encoding='utf-8',
-                  errors='replace') as f:
+        with open(chunk_path(n), encoding='utf-8', errors='replace') as f:
             text = f.read()
         m['disk'] += len(text)
-        for addr, decl, size, body in functions(text):
+        for addr, name, decl, size, body in functions(text):
+            m['big'].append((decl, addr, name, n))
             m['files'] += 1
             m['sum_size'] += size
             m['first'] = m['first'] or addr
@@ -161,19 +175,49 @@ def measure(lo, hi):
                 m['calls'][name] += body.count(call)
             m['calls']['atexit'] += body.count('atexit(')
         prev_class = None  # runs do not span chunk boundaries
+    m['big'].sort(reverse=True)
     return m
+
+
+def largest(lo, hi, top):
+    """[(declared_bytes, addr, name, chunk)] ranked by declared text size."""
+    out = []
+    for n in range(lo, hi + 1):
+        with open(chunk_path(n), encoding='utf-8', errors='replace') as f:
+            for h in HDR.finditer(f.read()):
+                out.append((int(h.group(3)), '0x%x' % int(h.group(1), 16), h.group(2), n))
+    out.sort(reverse=True)
+    return out[:top]
+
+
+def fmt_max(m, corpus):
+    """The corpus-max line: stored maximum + this range's biggest against it."""
+    top = m['big'][0] if m['big'] else None
+    if not corpus:
+        return 'corpus max: unknown - seed it: python scripts/pass_measure.py --maxscan'
+    if top and top[0] > corpus['bytes']:
+        return ('corpus max: NEW %s %d B (chunk %04d); was %s %d B (chunk %04d) -'
+                ' rule out an overlapping window (ledger 47) via scripts/crossref.py before recording'
+                % (top[2], top[0], top[3], corpus['name'], corpus['bytes'], corpus['chunk']))
+    return ('corpus max: %s %d B (chunk %04d)%s'
+            % (corpus['name'], corpus['bytes'], corpus['chunk'],
+               '  [range max = %.1f%% of it]' % (100.0 * top[0] / corpus['bytes'])
+               if top else ''))
 
 
 def census(counter, top=10, fmt=str):
     return ' '.join('%s x%d' % (fmt(k), v) for k, v in counter.most_common(top))
 
 
-def fmt_out(m):
+def fmt_out(m, corpus=None):
     L = []
     A = L.append
     A('== pass_measure chunks %04d-%04d ==' % (lo, hi))
     A('range: %s-%s   files=%d  sum_size=%d  disk=%d (post-strip)'
       % (m['first'], m['last'], m['files'], m['sum_size'], m['disk']))
+    A('largest: %s' % (' | '.join('%s %d B (chunk %04d)' % (name, d, n)
+                                 for d, _a, name, n in m['big'][:3]) or '-'))
+    A(fmt_max(m, corpus))
     A('classes: %s' % ' '.join('%s=%d' % (k, v) for k, v in m['classes'].most_common()))
     A('size census: %s' % ' '.join('%dx%d' % (k, v) for k, v in m['sizes'].most_common(24)))
     A('calls: cd360 x%d  1426c3bcc x%d  canary x%d  d4f30 x%d  d4f70 x%d  d4fb0 x%d  '
@@ -214,9 +258,44 @@ def fmt_out(m):
     return '\n'.join(L)
 
 
+def load_state():
+    with open(STATE) as f:
+        return json.load(f)
+
+
+def write_state(state):
+    with open(STATE, 'w', newline='\n') as f:
+        json.dump(state, f, indent=1)
+
+
+def maxscan():
+    """Rank the whole corpus by declared text size and store the maximum."""
+    if not os.path.exists(STATE):
+        print('max_text: %s missing - run --init or --update first' % STATE)
+        return 1
+    idx = json.load(open(os.path.join(FLOOD, 'index.json')))
+    last = len(idx['chunks']) - 1
+    top = largest(0, last, 12)
+    print('== pass_measure --maxscan: largest declared text bodies, all %d chunks =='
+          % (last + 1))
+    print('corpus max: %s %d B (chunk %04d)' % (top[0][2], top[0][0], top[0][3]))
+    for i, (d, _a, name, n) in enumerate(top, 1):
+        print('%2d. %-24s %7d B  chunk %04d' % (i, name, d, n))
+    state = load_state()
+    old = state.get('max_text') or {}
+    state['max_text'] = {'bytes': top[0][0], 'addr': top[0][1], 'name': top[0][2],
+                         'chunk': top[0][3]}
+    write_state(state)
+    print('[state.json] max_text = %s %d B (chunk %04d; was %s %s B)'
+          % (top[0][2], top[0][0], top[0][3], old.get('name', '-'), old.get('bytes', '-')))
+    return 0
+
+
 def main():
     global lo, hi
     argv = sys.argv[1:]
+    if '--maxscan' in argv:
+        return maxscan()
     rest = [a for a in argv if not a.startswith('--')]
     lo, hi = int(rest[0]), int(rest[1])
     if '--init' in argv:
@@ -226,20 +305,20 @@ def main():
 
     m = measure(lo, hi)
     state = {'passes': [], 'totals': collections.Counter(), 'reg_hashes': set(),
-             'record_rows': [], 'targets': set(), 'next_chunk': lo}
+             'record_rows': [], 'targets': set(), 'max_text': None}
     if os.path.exists(STATE) and mode != 'init':
-        with open(STATE) as f:
-            s = json.load(f)
+        s = load_state()
         state['reg_hashes'] = set(s.get('reg_hashes', []))
         state['record_rows'] = s.get('record_rows', [])
         state['passes'] = s.get('passes', [])
         state['totals'] = collections.Counter(s.get('totals', {}))
         state['targets'] = set(s.get('targets', []))
+        state['max_text'] = s.get('max_text')
 
     # record-hash match against all known registration hashes (cross-pass)
     known = state['reg_hashes'] | set(m['reg_hashes'])
     unmatched = [r for r in m['records'] if r['hash'] not in known]
-    print(fmt_out(m))
+    print(fmt_out(m, state['max_text']))
     print('record-hash match vs all known reg hashes: %d/%d%s'
           % (len(m['records']) - len(unmatched), len(m['records']),
              '; unmatched: ' + ', '.join('id 0x%x -> %s' % (r['id'], r['hash'])
@@ -274,11 +353,15 @@ def main():
     for d in ('d4f30', 'd4f70'):
         t['d4_' + d[2:]] += sum(m['dec_hashes'][d].values())
     state['next_chunk'] = hi + 1
-    with open(STATE, 'w', newline='\n') as f:
-        json.dump({'next_chunk': state['next_chunk'], 'passes': state['passes'],
-                   'totals': dict(state['totals']), 'reg_hashes': state['reg_hashes'],
-                   'record_rows': state['record_rows'], 'targets': state['targets']},
-                  f, indent=1)
+    top = m['big'][0] if m['big'] else None
+    if mode == 'update' and top and (not state['max_text']
+                                     or top[0] > state['max_text']['bytes']):
+        print('[state.json] max_text: %s %d B (chunk %04d)' % (top[2], top[0], top[3]))
+        state['max_text'] = {'bytes': top[0], 'addr': top[1], 'name': top[2], 'chunk': top[3]}
+    write_state({'next_chunk': state['next_chunk'], 'passes': state['passes'],
+                 'totals': dict(state['totals']), 'reg_hashes': state['reg_hashes'],
+                 'record_rows': state['record_rows'], 'targets': state['targets'],
+                 'max_text': state['max_text']})
     print('[state.json] next_chunk=%d  totals: %s' % (state['next_chunk'], dict(state['totals'])))
 
 

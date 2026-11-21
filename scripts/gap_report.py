@@ -3,7 +3,8 @@
 
 usage (from work/flood/):
   python scripts/gap_report.py FIRST LAST      # chunk numbers, as pass_next.py prints them
-  python scripts/gap_report.py FIRST LAST --check   # report, then assert the bookkeeping
+  python scripts/gap_report.py FIRST LAST --check     # report, then assert the bookkeeping
+  python scripts/gap_report.py FIRST LAST --offcuts   # + corpus sweep: offcut body or hole?
 
 Every adjacent pair of decompiled entries leaves a gap `next_entry - (addr + size)`. Before
 recording one (PROTOCOL.md; CODE_MAP ledgers 24/30/31/39) know which kind it is:
@@ -19,7 +20,20 @@ recording one (PROTOCOL.md; CODE_MAP ledgers 24/30/31/39) know which kind it is:
            but that Ghidra never emitted as a function. `offcut 0x…` is the first such
            address (a call target when there is one).
   hole     > 1 KiB, nothing in the range references the span. References come from this
-           range's own text only, so a reference from an unread chunk would not be seen.
+           range's own text only, so a reference from an unread chunk would not be seen;
+           --offcuts lifts that limit (below).
+
+`--offcuts` answers the one question the range-only report cannot: is a >1 KiB span an
+**offcut body** (code that exists in the binary but was never emitted as a function) or a
+**hole**, when the only reference to it comes from a chunk outside the range? It sweeps all
+chunks with the same three forms the range report uses (`FUN_`/`func_0x0…` call names,
+`LAB_`/`ram,0x` labels, bare `0x…` literals), diffs every referenced
+address against every decompiled entry in the corpus (a header scan; `index.json` carries
+only each chunk's first/last), and reclassifies each big gap: `giant` (own tail), `filed`
+(every reference is a decompiled entry elsewhere), `offcut` (referenced, no entry anywhere),
+`hole` (referenced by nothing). Pass 34 (307-314): the range-only report calls
+`0x1406c5b10->0x1406c5fd0` (1,111 B) a hole, but chunk 0535's `FUN_1406c5ba0(...)` makes it
+an offcut; `0x1406ac0e0->0x1406ad5e0` stays a hole (0 references corpus-wide).
 
 A pair whose next entry starts at or below `addr + size` is an overlap, not a gap, and is
 only counted. Chunk entry lists are globally address-sorted and unique, so an address
@@ -34,16 +48,19 @@ unreferenced. Pass 33 (295-306): 198 entries, 18 gaps > 1 KiB / 53,215 B = 12 gi
 
 Read-only, standard library only, no paths outside this repository.
 """
+import bisect
 import collections
+import json
 import os
 import re
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-import pass_measure  # noqa: E402  chunk parsing (functions) + declared sizes
+import pass_measure  # noqa: E402  chunk parsing (functions) + declared sizes + headers
 
 CHUNKS = os.path.join(os.path.dirname(HERE), 'chunks')
+INDEX = os.path.join(os.path.dirname(HERE), 'index.json')
 
 # `FUN_...` catches thunks too; the 0* prefix covers the 12-digit `func_0x0001406…` names.
 RE_CALL = re.compile(r'(?:func_0x0*|thunk_FUN_|FUN_)([0-9a-f]{9,16})')
@@ -69,7 +86,7 @@ def scan(lo, hi):
         with open(os.path.join(CHUNKS, 'chunk_%04d.txt' % n), encoding='utf-8',
                   errors='replace') as fh:
             text = fh.read()
-        for addr, _decl, size, body in pass_measure.functions(text):
+        for addr, _name, _decl, size, body in pass_measure.functions(text):
             a = int(addr, 16)
             if a not in ents:
                 ents[a] = size
@@ -132,11 +149,81 @@ def report(lo, hi):
     for cls in ('giant', 'offcut', 'hole'):   # 'giant+offcut' counts under giant
         b = buckets[cls]
         print('  %-8s %5d gaps %10d B' % (cls, len(b), sum(g[2] for g in b)))
-    return ents, own, gaps, buckets, entries
+    return ents, own, gaps, buckets, entries, detail
+
+
+def chunk_count():
+    with open(INDEX) as f:
+        return len(json.load(f)['chunks'])
+
+
+def sweep(spans):
+    """One corpus pass: {va: chunk} entries, {gap_index: {va: [chunk, forms]}} refs."""
+    starts = [s for s, _e in spans]
+    # the bisect below needs ascending starts; offcuts() passes report()'s address order
+    assert all(a < b for a, b in zip(starts, starts[1:])), 'gap spans not ascending'
+    ents, hits = {}, {}
+    for n in range(chunk_count()):
+        with open(os.path.join(CHUNKS, 'chunk_%04d.txt' % n), encoding='utf-8',
+                  errors='replace') as fh:
+            text = fh.read()
+        for h in pass_measure.HDR.finditer(text):
+            ents[int(h.group(1), 16)] = n
+        for v, forms in refs(text).items():
+            i = bisect.bisect_right(starts, v) - 1
+            if i >= 0 and v < spans[i][1]:
+                hits.setdefault(i, {}).setdefault(v, [n, set()])[1].update(forms)
+    assert all(spans[i][0] <= v < spans[i][1] for i, d in hits.items() for v in d),         'a reference landed outside its gap'
+    return ents, hits
+
+
+def offcuts(lo, hi):
+    """Reclassify the >1 KiB gaps with a corpus-wide call-reference sweep."""
+    ents, own, _gaps, _buckets, _entries, detail = report(lo, hi)
+    big = detail                       # ascending by address, as report() built it
+    if not big:
+        print('--offcuts: no gap > 1 KiB in this range')
+        return 0
+    all_ents, hits = sweep([(a + ents[a], b) for a, b, _d, _c, _r, _l in big])
+    print('== gap_report --offcuts: corpus sweep of %d chunks, %d entries,'
+          ' %d referenced addresses =='
+          % (chunk_count(), len(all_ents), sum(len(v) for v in hits.values())))
+    have, verdict, ext = collections.Counter(), {}, {}
+    for i, (a, b, d, cls, _reach, _lost) in enumerate(big):
+        # own-body labels are the giant tail, not separate evidence (same rule as report())
+        ext[i] = {v: x for v, x in hits.get(i, {}).items()
+                  if 'call' in x[1] or v not in own[a]}
+        if cls.startswith('giant'):
+            verdict[i] = 'giant+offcut' if ext[i] else 'giant'
+        elif ext[i] and all(v in all_ents for v in ext[i]):
+            verdict[i] = 'filed'
+        elif ext[i]:
+            verdict[i] = 'offcut'
+        else:
+            verdict[i] = 'hole'
+        have[verdict[i]] += 1
+    for i, (a, b, d, cls, reach, _lost) in sorted(enumerate(big), key=lambda x: -x[1][2]):
+        r = ext[i]
+        note = 'reach 0x%x' % reach if reach else ''
+        if r:   # a call target first, then labels/literals
+            note += ('  ' if note else '') + ' '.join(
+                '0x%x@%04d%s' % (v, r[v][0], '*' if v in all_ents else '')
+                for v in sorted(r, key=lambda v: ('call' not in r[v][1], v))[:3])
+            if len(r) > 3:
+                note += ' +%d' % (len(r) - 3)
+        print('    0x%x->0x%x %8d B  %-12s -> %-12s %s'
+              % (a, b, d, cls, verdict[i], note))
+    only = collections.Counter(c.split('+')[0] for _a, _b, _d, c, _r, _l in big)
+    print('  range-only: %s'
+          % ', '.join('%s %d' % (k, only[k]) for k in ('giant', 'offcut', 'hole') if only[k]))
+    print('  corpus:     %s   (* = a decompiled entry at that address)'
+          % ', '.join('%s %d' % (k, have[k]) for k in
+                      ('giant', 'giant+offcut', 'filed', 'offcut', 'hole') if have[k]))
+    return 0
 
 
 def check(lo, hi):
-    ents, own, gaps, buckets, entries = report(lo, hi)
+    ents, own, gaps, buckets, entries, _detail = report(lo, hi)
     hdr = 0
     for n in range(lo, hi + 1):
         with open(os.path.join(CHUNKS, 'chunk_%04d.txt' % n), encoding='utf-8',
@@ -170,6 +257,8 @@ def main(argv):
     lo, hi = int(args[0]), int(args[1])
     if '--check' in argv:
         return check(lo, hi)
+    if '--offcuts' in argv:
+        return offcuts(lo, hi)
     report(lo, hi)
     return 0
 
