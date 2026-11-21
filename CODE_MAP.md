@@ -28,14 +28,15 @@ per-pass `Σ size=` and every other cumulative number; the pending range is `NEX
 | 31–33 | `0276`–`0306` | `0x140610c60`–`0x14069b460` | 1,016 | `ranges/` rows 31–33 |
 | 34 | `0307`–`0314` | `0x14069bb80`–`0x1406c7080` | 351 | `ranges/0x14069bb80-0x1406c7080.md` |
 | 35 (9-chunk) | `0315`–`0323` | `0x1406c7b50`–`0x140738b30` | 382 | `ranges/0x1406c7b50-0x140738b30.md` |
-| **total** | **323, contiguous** | `0x140001000`–`0x140738b30` | **20,130** | machine-verified (`state.json`) |
+| 36 (13-chunk) | `0324`–`0336` | `0x140738d00`–`0x140760880` | 247 | `ranges/0x140738d00-0x140760880.md` |
+| **total** | **336, contiguous** | `0x140001000`–`0x140760880` | **20,377** | machine-verified (`state.json`) |
 
-Machine-verified cumulative (`state.json` after pass 35): files 20,130 (16.81 %), Σ `size=`
-5,381,142 (12.55 % of `.text`); classes reg 7,956 / wrapper 1,954 / builder 1,717 / sorted 280 /
-atexit 261 / record 326 / other **7,636**; registrations 7,956 ciphertext rows all distinct (+4
+Machine-verified cumulative (`state.json` after pass 36): files 20,377 (17.02 %), Σ `size=`
+5,522,535 (12.88 % of `.text`); classes reg 7,956 / wrapper 1,954 / builder 1,717 / sorted 280 /
+atexit 261 / record 326 / other **7,883**; registrations 7,956 ciphertext rows all distinct (+4
 plaintext rows, one hash ×2 — Corrections 16); `d4f30` 1,188 / `d4f70` 1,350 / `d4fb0` 4,492 /
-`c2d70` 4,212 / `c2d50` 326 / `c7880` 261 / `atexit` 315; records 326. Passes 27–35 = consumer
-only, zero registration (nine consecutive).## Corrections ledger (machine-derived; supersedes prose in older records)
+`c2d70` 4,212 / `c2d50` 326 / `c7880` 261 / `atexit` 315; records 326. Passes 27–36 = consumer
+only, zero registration (ten consecutive).## Corrections ledger (machine-derived; supersedes prose in older records)
 5. **`--update` is forward-only; `--init` wipes the pass list.** `--update` over a counted range double-counts and rewinds `next_chunk`; repair is `--init` — why `state.json`'s pass list covers only 16–35 (totals cover 1–35).
 7. **`pass_measure.py` prints no `ciphertext band:` line** — its `CTXT` regex needs `DAT_1438` + 6 hex digits; the band is now `0x1439a…`–`0x143b…`. Ciphertext extremes in records are read from the text, both addresses cited.
 8. **`pass_measure.py` `zones:` filter** prints only class `reg`/`record` runs with `cnt>=3`; 1–2-function builder/wrapper runs are absent from the skeleton (they exist in the text).
@@ -56,12 +57,13 @@ only, zero registration (nine consecutive).## Corrections ledger (machine-derive
 47. **`FUN_1406b3220` (41,249-B text) is not a corpus maximum** — one region seen through overlapping windows (as are the `FUN_1406c2cf0`-family chat cascade and, pass 35, `FUN_1407174e0`). **48. Corpus maxima were range maxima.** `pass_measure.py --maxscan` ranks the real top: `FUN_142b567b0` **571,552 B** (chunk `2056`) > `FUN_1423add80` 414,426 > `FUN_142b4e520` 398,819 > `FUN_140a17da0` 345,153; `state.json.max_text` holds the maximum and every `pass_measure.py` block compares its range against it; the block's `max refs:` line crossrefs the range max automatically, so a NEW max is a claim until no second entry names it (47); the 571,552-B body is in an **unread** chunk (`2056`).
 49. **Pass 35's 223,308-B `FUN_1407174e0` is one decompilation window over the whole store tier** — its stamps reach `0x140737d24`, past 30 later entries (class of 39/47); it is the range max (39.1 % of corpus max), NOT a corpus-max candidate. `sum_size` 23.3 % of the span is the ledger-30 effect at its most extreme: the two 111–161-KB "offcut" gaps are `FUN_1406d3ff0`/`1406efb90`'s real bodies. Corpus sweep keeps **6 holes / 18,531 B** (`0x1406ccb30`, `0x1406d2e50`, `0x1406cf520`, `0x14071af50`, `0x140728290`, `0x1406ce1a0` spans), all inside obfuscated bodies. **50. A second JSON parser exists** — the store tier parses HTTP responses with a rapidjson-style reader (`FUN_140612090` + DOM verify `FUN_1422ee440`); its verbatim error strings (codes 1–0x11, "The document is empty."…"Unknown error.") sit in `FUN_140734260`; distinct from the pass-32 text engine — do not merge the two constructs. **51. Thread 18's `FUN_14099xxxx` family is the store's platform/purchase API** (confirmed pass 35): `FUN_140992cf0/993c80/9957f0/9964f0/996720/9937a0` are called from `StoreSystem_C`; bodies still unread.
 52. **Resume range and measurement provenance are generated.** `pass_next.py` writes the resume block to `NEXT.txt` (from `state.json.next_chunk` + `--max`), and `pass_measure.py --json` prints the range facts plus a 16-hex `digest` (state-derived `corpus_max` excluded) a record can cite instead of pasting the block; the block's `max refs:` line auto-crossrefs the range max. First use closes thread 20: `FUN_1407174e0` is defined once (chunk `0316`) and no other function names it.
+53. **"Window chunks" — `size=` can be ~50× smaller than the chunk text.** Pass 36 has six entries like `FUN_14074d1e0` (size=3,144 vs 139,652-B chunk text), `FUN_140749e20` (1,076 vs 89,260), `FUN_14075c310` (76 vs 82,176), `FUN_14075a8a0` (231 vs 119,897), `FUN_14075d060` (294 vs 74,582), `FUN_14075fe40` (31 vs 7,617) — one decompilation window spanning many real functions (ledger-39 class made extreme). The named small entries around them are the real bodies; treat any chunk with `chunk_bytes / size= > 20` as a window chunk (suggested `pass_measure.py` ratio line; not implemented — measurement scripts are read-only by protocol).
 **Closed/superseded (moved to archive 2026-11-21, pass 35):** items 1–4, 6, 9–12, 14, 17–19, 21, 25, 28, 29, 35, 37, 38, 40, 42 — record-hash match rule (1, 9, 11), sorted/atexit counts (2, 3), provenance (4), no shutdown table (6), roots regime (12), sorted-insert middle call (14), RTTI band (17), XOR pad table (18), name-page layout (19), non-builder canaries (21, 25, 26), plaintext floats (27), MSVC concurrency (28), strpool naming (29, supersedes 19), event-bus registrar (35), range maxima 100,672/101,443 B (37, 38, superseded by 48), thread-6 closure (40), per-frame rows (41→kept), match-queue enum (33 kept). Full text in `CODE_MAP_ARCHIVE.md` §Corrections archive.
 
 ## What the code is — cumulative synthesis (35 passes; evidence unless marked [inference])
 
-`.text` is catalogued in entry-address order. After 323 chunks the cursor is at `0x140738b30`
-(16.81 % of functions, 12.55 % of `.text`). Names printed `func_0x…` have **no decompiled body
+`.text` is catalogued in entry-address order. After 336 chunks the cursor is at `0x140760880`
+(17.02 % of functions, 12.88 % of `.text`). Names printed `func_0x…` have **no decompiled body
 in this dump** — registrar, decryptors `d4f30`/`d4f70`, writer `c2d50`, helpers `c2d70`/`c7880`,
 the `0x140543xx0`/`0x1405674xx` decoder family, settings accessors, component getters, the hotfix
 HTTP client, the CSV parse iterator and the pass-32 cipher family `FUN_142454xxx` — as does
@@ -91,12 +93,20 @@ HTTP client, the CSV parse iterator and the pass-32 cipher family `FUN_142454xxx
    `FUN_140681360`, animation rings, widget binding, social/party-lobby layer);
    (34) its **replay/highlight/cinematic half** (progression reports + CSV export,
    demo/replay system, sequence recorder/player, spectator camera, chat/Markdown text
-   UI, presence pump); and (35) its **social + monetization half** — the party/social
+   UI, presence pump); (35) its **social + monetization half** — the party/social
    service client, the obfuscated player-stat layer (weighted scoreboard,
    gameplay-sabotage detection), sound-importance cvars + spatial visibility weights,
    and the full in-game store `StoreSystem_C` (OAuth, Steam microtransactions, product
    catalog with persisted cache, virtual currency and grant reports, personalized shop,
-   HTTP transport with a second rapidjson-style JSON parser).
+   HTTP transport with a second rapidjson-style JSON parser); and (36) the **store
+   purchase/VC completion tier, the client telemetry + platform-diagnostics layer, and
+   the obfuscated sound-effect/spatial service** — Battle.net API/OAuth region host
+   tables, the 16-value purchase-status enum, the named performance-counter report
+   schema, SAPI voice enumeration + speak queue, Steam screenshots/overlay/controller
+   input with a 16-device hot-plug state machine, and the
+   `0x622b95327b2e6d1e`-rooted effect/impulse engine (parallel job split, quaternion
+   emitter/listener placement, 0x100/0x80/0x58-B row pools, audio-channel records,
+   session close/flush with a `"hotfix"`-tagged report path).
    [inference: `0x14054fea0` marks the end of data registration and the start of
    behaviour.]
 
@@ -149,7 +159,7 @@ atexit carry stack cookies; registrations, wrappers and settings functions do no
 
 | band | content |
 |---|---|
-| `0x143848d40`–`0x14384ad54`, `0x143864e80`–`0x143864ed8` | XOR-8 name/payload ciphertext: runtime bootstrap, settings, logger, hotfix/log format strings, ~50 console-var names (3 copies), UI/event strings (key@+0, len@+8, latch-0x48). `0x14384b7b0–b7bc` on the same page are **plaintext** floats (Corrections 27). Pass 33 adds UI/dialogue pages `0x143853c10`–`0x143855944` + fn-ptr tables `0x143854720`/`0x143856720`; pass 34 extends to `0x143857d44` (replay/sequence/chat strings); **pass 35 extends to `0x143859f58`** (party/member status, ruleset enum, stat/sabotage, store/OAuth/grant pages) + new store fn-ptr tables (`PTR_FUN_142f8a3c0…4f0`, `142f8a728/7a0`, `142f8ac68…d58`, `142f8b108/b148/b250`, `PTR_FUN_1438493b0`, `PTR_FUN_143859178`); JSON-value pools `.data 0x144137230/248/250/268` |
+| `0x143848d40`–`0x14384ad54`, `0x143864e80`–`0x143864ed8` | XOR-8 name/payload ciphertext: runtime bootstrap, settings, logger, hotfix/log format strings, ~50 console-var names (3 copies), UI/event strings (key@+0, len@+8, latch-0x48). `0x14384b7b0–b7bc` on the same page are **plaintext** floats (Corrections 27). Pass 33 adds UI/dialogue pages `0x143853c10`–`0x143855944` + fn-ptr tables `0x143854720`/`0x143856720`; pass 34 extends to `0x143857d44` (replay/sequence/chat strings); **pass 35 extends to `0x143859f58`** (party/member status, ruleset enum, stat/sabotage, store/OAuth/grant pages) + new store fn-ptr tables (`PTR_FUN_142f8a3c0…4f0`, `142f8a728/7a0`, `142f8ac68…d58`, `142f8b108/b148/b250`, `PTR_FUN_1438493b0`, `PTR_FUN_143859178`); **pass 36 extends to `0x14385a6a4`** (Battle.net API/OAuth host tables + HTTP header pairs `0x143859328`–`0x143859560`, purchase-status enum `0x143859a18`–`b90`, the performance-counter schema `0x14385a058`–`0x14385a338`, match/tournament debug formats `0x14385a3a8`–`478`, session-summary tags to `0x14385a6a4`) + fn-ptr tables `PTR_FUN_142f8bc18/c50/c30`, `PTR_LAB_142f8bc88`, `PTR_FUN_142f8c7f0`, `PTR_LAB_142f8c508`, `PTR_FUN_142f8cbb8` (0x3f0-B channel), `PTR_LAB_142f8c950`, `PTR_FUN_142f8cc10`, `PTR_FUN_14385a580` (screenshot sink), `PTR_FUN_14384d9a0`; JSON-value pools `.data 0x144137230/248/250/268` |
 | `0x1438b8e50`–`0x1439a9b2c`, `0x143a16e38–2e7b` | registry name/payload ciphertext; `PTR_s_CompilerIDFilter_*`; triplet-stub object page `0x1439b0000`–`0x1439fa330` |
 | `0x143a155xx`–`0x143aa36xx`, `0x143b0c…`–`0x143b77…` | XOR-40 key tables, settings names, locale/ciphertext, catch keys, `0x143a19b50–0x143a19b88` (camera/volume float block), `0x143a19938–44` (render defaults) |
 | `0x143b7a428`–`0x143b7af00`, `0x143b7f410`, `0x143b808xx–0x143b81a0x` | passes 28–29 runtime block: logger objects, worker-pool state, object-id counter `0x143b91f50`, ~250 feature flags `0x143b945b8–0x143b9c5c0`; the app object; per-HUD-object flags |
@@ -173,14 +183,18 @@ the social presence pump), and (pass 35) its **social and monetization half** (t
 party/social service client, the obfuscated player-stat layer with weighted scoreboard
 and gameplay-sabotage detection, and the full `StoreSystem_C` in-game store: OAuth,
 Steam microtransactions, product catalog with persisted cache, virtual currency and
-grant reports).
+grant reports); (pass 36) its **client-diagnostics + audio-effect half** (the
+performance-counter telemetry report with FNV-1a change hash, SAPI voice + speak queue,
+Steam screenshots/overlay/controller input, and the obfuscated spatial sound-effect
+service with parallel job dispatch, quaternion emitter placement, 0x3f0-B audio-channel
+records and the session close/flush cascade).
 No plaintext game
 protocol (entity traffic is the `FUN_1406232f0`/`FUN_1406264c0` bitstream over an unframed
 transport — and the replay files reuse the same reader), the render device is one opaque
 `FUN_141ff40f0` call, and no gameplay *rules* are
 in the read range — but the HUD, scoreboard, kill feed, match-state builders, the
-social/party UI, the replay/highlight/cinematic pipeline, and now the store/monetization
-and player-stat-integrity layers are.
+social/party UI, the replay/highlight/cinematic pipeline, the store/monetization and
+player-stat-integrity layers, and now the named telemetry/audio subsystems are.
 Confidence: counts/shapes/bands measured; construct labels are shape-based inference;
 obfuscated bodies read structurally only.
 
@@ -188,14 +202,18 @@ obfuscated bodies read structurally only.
 family, settings accessors, component getters, HTTP client, CSV iterator, event-bus ctors
 `FUN_142e0xxxx`, cipher `FUN_142454xxx`; pass 33 adds the `0x14068xxxx` offcut helpers,
 emitters `FUN_141da/141db`, anim samplers; pass 35 adds the store platform API
-`FUN_14099xxxx` subset + obfuscation helpers `func_0x00014073/74xxxx`). (b) XOR-8 keys are
+`FUN_14099xxxx` subset + obfuscation helpers `func_0x00014073/74xxxx`; pass 36 adds the
+sound-asset object family `FUN_140d1xxxx` (16+ fns, offcut)). (b) XOR-8 keys are
 per-record salts; only pool text exists (ledger 29). (c) `0x142f0…`–`0x142f2b…` labelled
 thunks absent. (d) Corpus gaps: pass 30's 12 × >1 KiB (ledger 31); passes 31–33 offcut/
 under-reporting spans (ledger 39); pass 35's 24 × >1 KiB = 327,786 B (ledger 49: 6 corpus
-holes / 18,531 B, the rest `FUN_1407174e0` window + offcut bodies). (e) Obfuscated bodies
+holes / 18,531 B, the rest `FUN_1407174e0` window + offcut bodies); pass 36's 11 × >1 KiB =
+22,122 B (2 holes / 6,068 B inside the obfuscated telemetry/sound bodies, 8 giant tails +
+1 offcut). (e) Obfuscated bodies
 resist decompilation: pass 32's giants (`FUN_140669ee0` 100,672-B text …) carry offcut stamps
 to `0x1406a1703`; pass 33's `FUN_140681360` (101,443); pass 35's `FUN_1407174e0` (223,308,
-range max, one window — ledger 49).
+range max, one window — ledger 49); pass 36's window chunks per **ledger 53**
+(`FUN_14074d1e0` 139,652, `FUN_1407528b0` 136,865, `FUN_14075a8a0` 119,897, …).
 ## Cross-cutting conventions (one line each; per-pass deltas in the records)
 
 | convention | rule | first seen |
@@ -251,6 +269,11 @@ range max, one window — ledger 49).
 | **Social-actor manager (34)** | record 0x240 B `FUN_1406a4e90` (GUID blocks +0x18/+0x50/+0x70/+0xa8, bucket inits `FUN_142c95xx0`); 0x220-B net-state mirror `FUN_1406a6060`; hash lookup `FUN_1406a4be0` (0x10-B key); recent-players top-5 (`FUN_1406a7910`, 1-day gate 0x15181) | `0x1406a4e90` |
 | **Party/social + stats (35)** | member rows 0x1d8 B (dtor `FUN_1406c8230`); Steam-group sync `FUN_1406caa00`; SeasonLobbyState dumps `FUN_1406cc030/1406cbc50`; ruleset enum 16 names (pages `0x1438586c0`+); weighted-stat scoreboard `FUN_14071dce0`; gameplay-sabotage detector `FUN_14071d290`; GUID→name `FUN_14071ea70` | `0x1406c7b50` |
 | **StoreSystem_C (35)** | object 0x390 B (ctor `FUN_14072c560`); product rows 0x1b8 B; catalog cache loader `FUN_14072e230` (CSV schema + 2 JSON blobs); pending-request queue 0x110-B `{id,next}`, states 0/4/5/9/0xc/0xd; OAuth `FUN_140734af0/260`; Steam mtx (`STEAMINVENTORY_INTERFACE_V003`); URL picker `FUN_140738790`; auth-error gate `{0x191,0,0x1ad,5xx}`; "Content-Encoding" parser `FUN_140738b30`; grant pipeline `_tier_`/"BattlePass: … - Tier …" | `0x14072c560` |
+| **Store completion + hosts (36)** | async sinks `FUN_140738d00/8e60` (`0x40`-B request rows, queue `DAT_144151988`); header-pair builder `FUN_140738f80` (json) / `FUN_1407398c0` (form); region→host `FUN_1407393a0` (us/eu/kr.api.blizzard.com) + OAuth `FUN_140739a90` (battle.net/sso); purchase pipeline `__PlaceOrderWithVirtualCurrency` (`FUN_14073a190`→`FUN_14073a600`, retry ×7 +1000 ms); `__ProductsComplete` `FUN_14073ad30` (cache write `FUN_1423892b0…`); VC balance `FUN_14073e850`; purchase-status enum 16 values `FUN_14073bc80`; async event pump `FUN_14073c6c0` (row types 2/3/4/5/6/7/9/10/0xb); submit funnel `FUN_14073ba80` | `0x140738d00` |
+| **Telemetry report (36)** | change hash FNV-1a `FUN_140741960/140742ef0` vs latch `_DAT_143b8bb68`; report builder `FUN_140743c50` (+ send twin `FUN_140745880`): 0x58 root / 0x68 system / 0xd8 + 0x60 / 0x48 local-player sections, `|1|2|4…` presence flags; **named perf-counter schema** ('System.PeakWorkingSet'…'SingleFrame', 0x40-entry counter walk) `0x14385a058`–`0x14385a338` | `0x140743c50` |
+| **SAPI voice (36)** | enum `FUN_14073fe50` (HKLM `SOFTWARE\Microsoft\Speech\Voices`, `RegLoadMUIStringW("Description")`); speak `FUN_140740370` (rate vt+0xe0, volume vt+0xf0); pump `FUN_140740930` | `0x14073fe50` |
+| **Steam overlay/input (36)** | screenshots `STEAMSCREENSHOTS_INTERFACE_VERSION003` (`FUN_14074b210`, RGBA→RGB dump `FUN_14074a990`); overlay frame `FUN_14074b240` (10 hotkey rows 0xe28… ids, controller glyph refresh); input gate `FUN_14074ba20` (id ranges 0x113–0x138); device hot-plug tail at `0x1421e1e4c` (4-state, `_DAT_143aa88c8[0x40]`) | `0x14074a990` |
+| **Sound-effect service (36)** | masked root `0x622b95327b2e6d1e^0xd6c0ac78d0e44481`; effect rows 0x100 B (ctor `FUN_140750950`, vtable `PTR_FUN_142f84590`) + 0x80/0x58/0x28 pools; importer `FUN_140752d10`; dispatcher `FUN_14074d1e0` (range max, parallel split `FUN_14075ce50` ×`FUN_14075bc70`); emitter math `FUN_1407517a0`/`FUN_14075f180` (quaternion basis `_DAT_14328cd80…`, Newton rsqrt); channel records 0x3f0 B (`FUN_14075b430`, dtor `FUN_14075b880`, vtable `PTR_FUN_142f8cc10`); audio flags `FUN_142044960(0x100/0x585/0x7b7/0x172/0x171)`; session close `FUN_14075d060` (900-ms stall flag, `"hotfix"` report path); asset family `FUN_140d1xxxx` (offcut) | `0x14074dbd0` |
 | **JSON parser #2 (35)** | rapidjson-style reader `FUN_140612090` + DOM verify `FUN_1422ee440`; verbatim error table 1–0x11 ("The document is empty."…"Unknown error.") in `FUN_140734260`; distinct from pass-32 engine | `0x140734260` |
 
 ## Open threads (cheapest next query each; check/update every pass)
@@ -267,32 +290,39 @@ range max, one window — ledger 49).
 18. **Party/lobby `FUN_14099xxxx` family** — pass 35 confirms it is the **store/platform purchase API** (`FUN_140992cf0` request post, `FUN_140993c80` scope/region, `FUN_1409957f0` time source, `FUN_1409964f0` per-row test, `FUN_140996720` license check, `FUN_1409937a0` region/enum, `FUN_140993710/140997520` product lookups) — called constantly by `StoreSystem_C`; **bodies at `0x14099xxxx` remain unread** (cursor at `0x140738b30`); grep forward when the read reaches them.
 19. **Widget/party enum pages** — XOR-8 names `0x143854b30–0x143854cb0` and the party-screen columns `0x1438556b0–0x143855790`; decode via `strpool.tsv`/`poolmap`. Pass 34 extends the XOR-8 band to `0x143857d44` (replay/chat log strings); **pass 35 extends it to `0x143859f58`** (party/member status, ruleset enum, stat/sabotage, store/OAuth/grant pages).
 20. **`FUN_1407174e0` window split (T35-1)** — CLOSED by the standing `max refs:` check: `python scripts/crossref.py 1407174e0` = defined once (chunk `0316`), no other function names it, so its 223,308-B text is a single window over bodies Ghidra never filed as entries — there is no second entry set to split off (ledger 52).
-21. **Store endpoint labels (T35-2)** — decode XOR-8 pages `0x1438595b0–0x1438597c8` (`python scripts/strlookup.py --band 0x1438595b0 0x1438597c8`) to name the six 2,495-B response-handler twins; 'StorefrontService/v1/GetCurrentPages' and '/ProductCatalogService/v1/GetProductsByStoreId' are already visible.
+21. **Store endpoint labels (T35-2)** — decode XOR-8 pages `0x1438595b0–0x1438597c8` (`python scripts/strlookup.py --band 0x1438595b0 0x1438597c8`) to name the six 2,495-B response-handler twins; 'StorefrontService/v1/GetCurrentPages' and '/ProductCatalogService/v1/GetProductsByStoreId' are already visible. **Pass 36 partially resolves the store-request side** (hosts/headers/purchase-status decoded, record §1) — the response twins themselves remain unnamed.
+22. **Sound-effect asset family `FUN_140d1xxxx` (T36-2)** — 16+ functions (`FUN_140d171e0/17180/171d40/17900/16420/157d0/16800/180a0/19770/189a0/1bcc0/1b4b0/d1b4c0/d1b4e0/d19cd0/1ec70`) called throughout the `0x622b95327b2e6d1e` effect service; bodies offcut at `0x140d1xxxx`, unread. Query: `python scripts/crossref.py 140d1bcc0`.
+23. **Audio-channel id semantics (T36-4)** — `FUN_142044960(chan,0x100/0x585/0x7b7/0x172/0x171,…)`. Query: `python scripts/crossref.py 142044960`.
+24. **`0x8784b4333a5802xx` masked string chain (T36-3)** — `FUN_14075fe40`/`FUN_140771f60` copy `_DAT_1439dc5c8/5f8/628`; decode the band or extend the ledger-36 chain. Query: `python scripts/strlookup.py --pool rdata_names.tsv --band 0x1439dc5c0 0x1439dc630`.
+25. **Component-message id enums (T36-5)** — grow the pass-32 tables: `0x5800000000000dc/41b/3bd8` poster family, `0xd80000000000…` query family (`734`,`4aa`,`18cb`,`20a7`,`1c8d/4d2/8e3/522/a0d/1df3`), toast `0xde000000001b12b`. Query: grep forward for `0x580000000000` / `0xd80000000000`.
 
-CLOSED (machine): fd9670 recount; provenance; `0x1411b8070`; thread 43; thread 20 (`max refs:`); JSON writer/parser/CSV consumer (31/32); XOR-8 salt keys; presence-failure events; ledgers 1–4, 6, 9–12, 14, 17–21, 25, 28–29, 35, 37–38, 40 (see Corrections archive).
+CLOSED (machine): fd9670 recount; provenance; `0x1411b8070`; thread 43; thread 20 (`max refs:`); JSON writer/parser/CSV consumer (31/32); XOR-8 salt keys; presence-failure events; ledgers 1–4, 6, 9–12, 14, 17–21, 25, 28–29, 35, 37–38, 40 (see Corrections archive). Pass 36 closes T35-1's window-split question for `FUN_14074d1e0` (one entry, `max refs:` shows no second namer — ledger 47 rule) and resolves T35-3's "socket layer nearby" expectation: no socket layer in range; the store's HTTP transport sits above an absent lower tier.
 
 ## Next pass
 
 Resume range: **`NEXT.txt`** — written by `python scripts/pass_next.py` from
-`state.json.next_chunk` + `--max`; regenerate it after every `--update`, never hand-edit.
-Pass 35 ends at `FUN_140738b30`, engine-runtime stratum `0x14054fea0` OPEN. Run
-`pass_measure.py <start> <end>`, quote the block or cite its `--json` digest, run `--update`,
-refresh `NEXT.txt` and this file. Watch for: (a) the **store/monetization continuation** — the
-`StoreSystem_C` tier (chunks 0319–0323) references platform bodies just ahead:
-`FUN_1407398c0/14073a020` (session store), `FUN_140736160/1407366b0/140736790`
-(gate/URL helpers), `FUN_140739cf0`, plus the six 2,495-B response-handler twins'
-endpoints (thread 21); (b) the **`FUN_14099xxxx` platform/purchase API** (thread 18,
-now the store's confirmed dependency) — bodies at `0x14099xxxx`, still far ahead;
-(c) the **socket/transport layer** under the cipher `FUN_142454xxx` (threads 2/17) —
-the store's HTTP transport (`FUN_140738b30` header parse, `FUN_1407388d0` watchdog)
-suggests the socket layer is nearby (thread T35-3); (d) whether the store stratum
-gives way to new gameplay systems or more client services; (e) the 223-KB
-`FUN_1407174e0` window is one emission (thread 20 closed, ledger 52), so the next
-chunks should be ordinary store/service bodies. Do not re-run a
-counted range through `--update` (ledger 5); no ciphertext script line (ledger 7);
-leave the stale flags (ledgers 11/16) alone; never treat `0x826e…`/`0xca334801` or
-offcut-call addresses as data (ledger 20); ledgers 24/31/39/44/49 for gaps; `size=`
-is not coverage (ledger 30); overlapping windows per ledgers 39/47/49 — treat
-`FUN_140678850`/`140689930`/`14068ae00`-, `FUN_1406c2cf0`/`1406c3ec0`/`1406c44c0`/
-`1406c4b20`/`1406c50b0`-, and `FUN_1407174e0`-shaped duplicates as one cascade
+`state.json` + `--max`; regenerate it after every `--update`, never hand-edit.
+Pass 36 ends at `FUN_140760880` (the 16-bank input-record reset), engine-runtime stratum
+`0x14054fea0` OPEN. Run `pass_measure.py <start> <end>`, quote the block or cite its
+`--json` digest, run `--update`, refresh `NEXT.txt` and this file. Watch for: (a) the
+**sound-service continuation** — the `0x622b95327b2e6d1e` root's asset family
+`FUN_140d1xxxx` (thread 22) and the `0x140760c30/140760880/140761230/1407615c0`
+input-tier forwards named in `FUN_140760130` sit just ahead in the resume range
+(`0x140760c30`+); (b) the **audio-device layer** — `FUN_140771f60`, `FUN_14077b480`,
+`FUN_14077c670` and the `0x8784b4333a5802xx` chain (thread 24) are all called from
+`FUN_14075fe40`/`FUN_14075d060` and should appear next; (c) the **`FUN_14099xxxx`
+platform API** (thread 18) — still ahead; (d) whether the sound/input stratum gives way
+to new subsystems; (e) **window chunks** per ledger 53 — six entries this pass had
+`chunk_bytes / size= > 20`; expect more in the `0x14076…`–`0x14078…` band and cite the
+ratio rather than re-deriving it. Do not re-run a counted range through `--update`
+(ledger 5); no ciphertext script line (ledger 7); leave the stale flags (ledgers 11/16)
+alone; never treat `0x826e…`/`0xca334801` or offcut-call addresses as data (ledger 20);
+ledgers 24/31/39/44/49/53 for gaps; `size=` is not coverage (ledger 30); overlapping
+windows per ledgers 39/47/49 — treat `FUN_140678850`/`140689930`/`14068ae00`-,
+`FUN_1406c2cf0`/`1406c3ec0`/`1406c44c0`/`1406c4b20`/`1406c50b0`-, `FUN_1407174e0`-,
+and now the pass-36 set (`FUN_14074d1e0`, `FUN_1407528b0`, `FUN_14075a8a0`,
+`FUN_14075c310`, `FUN_14075d060`, `FUN_140749e20`, `FUN_14075fe40`, `FUN_140759210`,
+`FUN_1407517a0`, `FUN_1407556b0`, `FUN_140758a70`, `FUN_140759f30`, `FUN_140752d10`,
+`FUN_14075dd20`, `FUN_14075e1a0`, `FUN_14074b240`, `FUN_14074c200`)-shaped duplicates
+as one cascade each.
 each.
