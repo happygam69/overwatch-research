@@ -28,6 +28,9 @@ totals, all registration hashes, all `{id,hash}` rows. Never hand-accumulate num
 `scripts/pass_next.py` → range picker: start chunk (or `state.json.next_chunk`) + `--max` KiB
 cap (default 1200) → printed chunk range, `.text` range, `pass_measure.py` command, record
 path. Read-only.
+`scripts/gap_report.py` → gap classifier, same chunk range in: every inter-entry gap as
+padding (≤16 B) / `size=` (≤1 KiB) / **giant** tail / **offcut** body / **hole**, with byte
+totals, so a record quotes it instead of classifying gaps by hand. Read-only.
 
 (Not to be confused with `../flood.py` — the byte-budget corpus streamer with
 `../flood_cursor.txt`, a separate mechanism.)
@@ -45,7 +48,9 @@ the script, not a remembered chunk count. You have a
 2. Run `python scripts/pass_measure.py <first> <last>` from this repo root and read its output
    alongside the chunks — it is the index to what was read (headline numbers, class and
    zone skeleton, registration/decrypt censuses, record-hash matches), never a
-   substitute for reading.
+   substitute for reading. For the record's gap caveat run
+   `python scripts/gap_report.py <first> <last>`; for the pass's decoded XOR-8 UI names run
+   `python scripts/strscan.py --x8 <first> <last>`.
 3. Write one record: `ranges/<first>-<last>.md`, named by the `.text` addresses covered
    (from the script's `range:` line or `index.json`). **Quote the script output verbatim**
    in the record's headline-numbers section; do not retype its numbers.

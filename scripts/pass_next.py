@@ -106,6 +106,7 @@ def main():
           .format(total, max_kb, max_bytes, tail))
     print('text    %s-%s' % (first, last))
     print('measure python scripts/pass_measure.py %d %d' % (lo, hi))
+    print('gaps    python scripts/gap_report.py %d %d' % (lo, hi))
     print('record  ranges/%s-%s.md' % (first, last))
     print('next    state.json.next_chunk becomes %d after --update' % (hi + 1))
 
