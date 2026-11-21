@@ -986,3 +986,17 @@ the shutdown-table band keeps growing (`0x143e2b–0x143e42`) and a 12th+ initia
 appears; (f) whether the arg10 band reaches the `0x14130c–0x14131` band's end and a new callback
 band opens; (g) whether the ciphertext band crosses `0x1438e8000`; (h) whether the two new gaps
 (`0x140298fd9`, `0x1402bf899`) get explained by listing data.
+
+## Coverage archive (passes 16–22, moved from `CODE_MAP.md` 2026-11-21 to keep it ≤300 lines)
+
+Rows 1–15 are in the Coverage table above; passes 23+ remain in `CODE_MAP.md`. Source of truth: `state.json`.
+
+| pass | chunks | `.text` range | functions | Σ `size=` | record |
+|---|---|---|---|---|---|
+| 16 | `0124`–`0131` | `0x1402c17e0`–`0x1402e9f70` | 541 | 147,915 | `ranges/0x1402c17e0-0x1402e9f70.md` |
+| 17 (10-chunk override) | `0132`–`0141` | `0x1402ea070`–`0x1403220c0` | 777 | 209,051 | `ranges/0x1402ea070-0x1403220c0.md` |
+| 18 (9-chunk) | `0142`–`0150` | `0x1403222e0`–`0x14034ed30` | 562 | 162,088 | `ranges/0x1403222e0-0x14034ed30.md` |
+| 19 (10-chunk) | `0151`–`0160` | `0x14034ede0`–`0x1403857a0` | 727 | 196,086 | `ranges/0x14034ede0-0x1403857a0.md` |
+| 20 (10-chunk) | `0161`–`0170` | `0x1403858a0`–`0x1403ac1e0` | 522 | 144,458 | `ranges/0x1403858a0-0x1403ac1e0.md` |
+| 21 (11-chunk) | `0171`–`0181` | `0x1403ac370`–`0x1403e7590` | 771 | 214,614 | `ranges/0x1403ac370-0x1403e7590.md` |
+| 22 (11-chunk) | `0182`–`0192` | `0x1403e7730`–`0x1404191d0` | 630 | 181,579 | `ranges/0x1403e7730-0x1404191d0.md` |

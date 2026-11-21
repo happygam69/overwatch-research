@@ -61,7 +61,8 @@ def region(addr):
 
 
 def unescape(s):
-    return re.sub(r"\\(.)", lambda m: "\t" if m.group(1) == "t" else m.group(1), s)
+    esc = {"t": "\t", "n": "\n", "r": "\r"}
+    return re.sub(r"\\(.)", lambda m: esc.get(m.group(1), m.group(1)), s)
 
 
 def load(path=None):
