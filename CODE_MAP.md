@@ -1,6 +1,7 @@
 # CODE_MAP — cumulative map of the systematic `.text` read
 
-**Read in full before every pass; update after every pass. Hard budget: ≤300 lines.** Per-pass
+**Read in full before every pass; update after every pass. Hard budget: ≤350 lines** (raised
+from 300 at pass 39, 2026-11-22 — see Corrections 55). Per-pass
 narrative lives ONLY in `ranges/`; cumulative numbers come from `state.json` (via
 `scripts/pass_measure.py`) — never hand-add. Long-form archive: `CODE_MAP_ARCHIVE.md`.
 
@@ -27,14 +28,15 @@ Corpus: 2,228 chunks, 119,757 functions, 42,864,695 B `.text`. Passes 1–22 arc
 | 36 (13-chunk) | `0324`–`0336` | `0x140738d00`–`0x140760880` | 247 | `ranges/0x140738d00-0x140760880.md` |
 | 37 (12-chunk) | `0337`–`0348` | `0x140760c30`–`0x140784fd0` | 308 | `ranges/0x140760c30-0x140784fd0.md` |
 | 38 (11-chunk) | `0349`–`0359` | `0x140785e30`–`0x1407a2800` | 238 | `ranges/0x140785e30-0x1407a2800.md` |
-| **total** | **359, contiguous** | `0x140001000`–`0x1407a2800` | **20,923** | machine-verified (`state.json`) |
+| 39 (8-chunk) | `0360`–`0367` | `0x1407a28c0`–`0x1407cc6a0` | 468 | `ranges/0x1407a28c0-0x1407cc6a0.md` |
+| **total** | **367, contiguous** | `0x140001000`–`0x1407cc6a0` | **21,391** | machine-verified (`state.json`) |
 
-Machine-verified (`state.json` after pass 38): files 20,923 (17.47 %), Σ `size=` 5,729,023
-(13.37 %); classes reg 7,956 / wrapper 1,954 / builder 1,717 / sorted 280 / atexit 261 /
-record 326 / other **8,429**; 7,956 distinct ciphertext registrations + 4 plaintext rows
+Machine-verified (`state.json` after pass 39): files 21,391 (17.86 %), Σ `size=` 5,888,892
+(13.74 %); classes reg 7,956 / wrapper 1,954 / builder 1,717 / sorted 280 / atexit 261 /
+record 326 / other **8,897**; 7,956 distinct ciphertext registrations + 4 plaintext rows
 (one hash ×2 — Corrections 16); `d4f30` 1,188 / `d4f70` 1,350 / `d4fb0` 4,492 / `c2d70`
-4,212 / `c2d50` 326 / `c7880` 261 / `atexit` 315; records 326. Passes 27–38 = consumer
-only, zero registration (twelve consecutive).
+4,212 / `c2d50` 326 / `c7880` 261 / `atexit` 315; records 326. Passes 27–39 = consumer
+only, zero registration (thirteen consecutive).
 
 ## Corrections ledger (machine-derived; supersedes prose in older records)
 5. **`--update` is forward-only; `--init` wipes the pass list.** `--update` over a counted range double-counts and rewinds `next_chunk`; repair is `--init` (why `state.json`'s pass list covers only 16–37 while totals cover 1–37).
@@ -58,13 +60,14 @@ only, zero registration (twelve consecutive).
 49. **Pass 35's 223,308-B `FUN_1407174e0` is one decompilation window over the whole store tier** — its stamps reach `0x140737d24`, past 30 later entries (class of 39/47); it is the range max (39.1 % of corpus max), NOT a corpus-max candidate. `sum_size` 23.3 % of the span is the ledger-30 effect at its most extreme: the two 111–161-KB "offcut" gaps are `FUN_1406d3ff0`/`1406efb90`'s real bodies. Corpus sweep keeps **6 holes / 18,531 B** (`0x1406ccb30`, `0x1406d2e50`, `0x1406cf520`, `0x14071af50`, `0x140728290`, `0x1406ce1a0` spans), all inside obfuscated bodies. **50. A second JSON parser exists** — the store tier parses HTTP responses with a rapidjson-style reader (`FUN_140612090` + DOM verify `FUN_1422ee440`); its verbatim error strings (codes 1–0x11) sit in `FUN_140734260` (+ pass-37 second site `FUN_140778120`); distinct from the pass-32 text engine — do not merge the two constructs. **51. Thread 18's `FUN_14099xxxx` family is the store's platform/purchase API** (confirmed pass 35): `FUN_140992cf0/993c80/9957f0/9964f0/996720/9937a0` are called from `StoreSystem_C`; bodies still unread.
 52. **Resume range and measurement provenance are generated.** `pass_next.py` writes the resume block to `NEXT.txt` (from `state.json.next_chunk` + `--max`), and `pass_measure.py --json` prints the range facts plus a 16-hex `digest` (state-derived `corpus_max` excluded) a record can cite instead of pasting the block; the block's `max refs:` line auto-crossrefs the range max. First use closes thread 20: `FUN_1407174e0` is defined once (chunk `0316`) and no other function names it.
 53. **"Window chunks" — `size=` can be ~50× smaller than the chunk text.** Pass 36 has six entries like `FUN_14074d1e0` (size=3,144 vs 139,652-B chunk text), `FUN_140749e20` (1,076 vs 89,260), `FUN_14075c310` (76 vs 82,176), `FUN_14075a8a0` (231 vs 119,897), `FUN_14075d060` (294 vs 74,582), `FUN_14075fe40` (31 vs 7,617) — one decompilation window spanning many real functions (ledger-39 class made extreme; pass 37 has fifteen more, record §headline). The named small entries around them are the real bodies; treat any chunk with `chunk_bytes / size= > 20` as a window chunk. **Far reaches.** Those windows also stamp far outside the range (`FUN_14074b240` → `0x1421e243d` +27.9 MB; pass 37: `FUN_14077fd10`/`FUN_1407803f0` → `0x141c4b29c`, `FUN_140765e50` → `0x140785b27`) — pointers into unread regions, never this range's coverage. `gap_report.py` prints the top three as its `window reach:` line, so the watch list is generated, not hand-collected.
-54. **The UI-window cache is machine-visible.** Five pass-37 giants (`FUN_14077d100/d230`, `FUN_140782390/2d70`, `FUN_140784720`) share an identical `0x2d1d7705`-family return-address hash + binary search against `_DAT_143b795a0/a8/b0` — a return-address → UI-window cache; treat any body naming `_DAT_143b795a0` as a window-cache giant (ledger-53 class; would have predicted 4/6 of pass 37's giant gaps). `0x4343ffa4`-family branches there are decompiler fabrications (ledger-20 class).
+54. **The UI-window cache is machine-visible.** Five pass-37 giants (`FUN_14077d100/d230`, `FUN_140782390/2d70`, `FUN_140784720`) share an identical `0x2d1d7705`-family return-address hash + binary search against `_DAT_143b795a0/a8/b0` — a return-address → UI-window cache; treat any body naming `_DAT_143b795a0` as a window-cache giant (ledger-53 class; would have predicted 4/6 of pass 37's giant gaps). `0x4343ffa4`-family branches there are decompiler fabrications (ledger-20 class). **Pass 39 adds the dtor-side tail:** five bodies (`FUN_1407a3ac0`, `FUN_1407b11f0`, `FUN_1407b3c80`, `FUN_1407ba440`, `FUN_1407c2880`) end with the same `_DAT_143b795a0/a8` walk + `0xfd749dd6ef1fd0d4` chain — the cache's teardown, not a per-object check; the retire idiom (`0x20000`-flag guard + `FUN_1421522e0`/`func_0x00014214eb70`/`FUN_14214d400` + `+0x914` sentinel, the `14213f7d7` label) recurs ~25× this pass and is the standard spawned-object retire.
+55. **Pass 39 is the first window-free, zero-gap consumer pass** — no chunk had `chunk_bytes / size= > 20` (largest `FUN_1407c4710` ~8.7, `FUN_1407a8a70` ~7.0, all real bodies), and `gap_report` shows **0 holes, 0 >1 KiB gaps, 93.2 % sum_size/span** (densest yet; ledger-31 class only). Also the first pass whose XOR-8 band decodes to readable ASCII: the `0x14385c898`–`0x14385c9b4` band is the Battle.net product-namespace (`BLZBNTPUR3000001/3/5`, `BLZBNTCAT20000011`, `30000001/2`, `10200293/252/407`, `10010102`, `30000101`) consumed by `FUN_1407cb420`'s category-id table (ids 0x39–0x46); the XOR-8 mechanism carries code constants, not only names (pass-38 T38-1's negative is name-band-specific).
 **Closed/superseded (moved to archive 2026-11-21, pass 35):** items 1–4, 6, 9–12, 14, 17–19, 21, 25, 28, 29, 35, 37, 38, 40, 42 — record-hash match rule (1, 9, 11), sorted/atexit counts (2, 3), provenance (4), no shutdown table (6), roots regime (12), sorted-insert middle call (14), RTTI band (17), XOR pad table (18), name-page layout (19), non-builder canaries (21, 25, 26), plaintext floats (27), MSVC concurrency (28), strpool naming (29, supersedes 19), event-bus registrar (35), range maxima 100,672/101,443 B (37, 38, superseded by 48), thread-6 closure (40), per-frame rows (41→kept), match-queue enum (33 kept). Full text in `CODE_MAP_ARCHIVE.md` §Corrections archive.
 
-## What the code is — cumulative synthesis (37 passes; evidence unless marked [inference])
+## What the code is — cumulative synthesis (39 passes; evidence unless marked [inference])
 
-`.text` is catalogued in entry-address order. After 348 chunks the cursor is at `0x140784fd0`
-(17.28 % of functions, 13.17 % of `.text`). Names printed `func_0x…` have **no decompiled body
+`.text` is catalogued in entry-address order. After 367 chunks the cursor is at `0x1407cc6a0`
+(17.86 % of functions, 13.74 % of `.text`). Names printed `func_0x…` have **no decompiled body
 in this dump** — registrar, decryptors `d4f30`/`d4f70`, writer `c2d50`, helpers `c2d70`/`c7880`,
 the `0x140543xx0`/`0x1405674xx` decoder family, settings accessors, component getters, the hotfix
 HTTP client, the CSV parse iterator and the pass-32 cipher family `FUN_142454xxx` — as does
@@ -84,8 +87,25 @@ HTTP client, the CSV parse iterator and the pass-32 cipher family `FUN_142454xxx
 5. **Runtime bootstrap + obfuscated dispatchers** `0x14053f6b0`–`0x14058200x`: PE `entry`
    trampoline, signature scanner `FUN_140541200` (patch record `0x143b79640`), anti-tamper
    (CPUID FPU gate, `"0x811C9DC5"`), masked-pointer layer with 16–47 KB obfuscated bodies.
-6. **Engine runtime** `0x14054fea0`→ (passes 28–38, **OPEN**). The game client's own
+6. **Engine runtime** `0x14054fea0`→ (passes 28–39, **OPEN**). The game client's own
    runtime — cumulative halves, newest first; per-pass detail in `ranges/`:
+   (39) **party/group/voice/chat client tier** — the 0x14f8-B session object
+   (0x400-entry GUID handle table, `0x400` write-lock id getters, cvar-sync
+   `0xe060f0/0xe060f2/0xe0873a`), the 0x110-B spawn rows + 24,688-B spawn-transform
+   solver `FUN_1407a8a70` (parent-relative quaternion compose with
+   `0x143a1a9f0/0x143a1aa0x` float-XOR masks, the pass-33 `FUN_140678850`
+   component path), the chat/message dispatch tier (`FUN_1407ac0e0` handler
+   alloc + the `'<'`→`'\\<'` markup escaper, the say/party-chat send
+   `FUN_1407ad370` with `FUN_1407af9a0` filter), the 0x1120-B social manager +
+   0x1c0-B member records over hash-D maps, the 0x1c30-B group manager +
+   0x6118-B stat tracker (`FUN_1407babf0` merge+sort with the `0x1439aef88`
+   svc posts), the 0x1940-B voice/chat settings (hatespeech/reserved word lists,
+   channel-verb registration, regex/wildcard match trio), the 0x690-B channel
+   object + 18-key channel-property parser `FUN_1407c4710`, and the party
+   slot-assignment engine `FUN_1407cc6a0`/`FUN_1407c9480` (occupancy-bitmap
+   free-rect placement, two-phase first-fit/worst-fit slot claim); the
+   Battle.net product-code category table `FUN_1407cb420`; the JSON stat
+   export `FUN_1407c8920`;
    (38) **UI-window engine room** — the window-cache giant family doubles to ~24
    prologue-bearing bodies (11 full giants incl. range max `FUN_140786360`); three
    `0xd8…`-descriptor apply twins (~80 ids total); the 3-phase spring init/eval +
@@ -150,6 +170,25 @@ sabotage detector); sound-importance cvars; spatial visibility weights; 64-slot
 registry service; **StoreSystem_C** (catalog cache, request queue, OAuth, Steam mtx,
 product sets, bundle price, `__GetProducts`, personalized shop, VC grants, URL picker,
 watchdog, "Content-Encoding"); hash C/D maps; wait-handle registry ×78.
+(39) **party/group/voice/chat client (39)**: session object 0x14f8 B (ctor `FUN_1407a3540`,
+GUID table 0x400, id getters `FUN_1407a28c0`–`FUN_1407a30a0`); spawn rows 0x110 B
+(`FUN_1407a7280` ctor, transform solver `FUN_1407a8a70`, LOD gate `FUN_1407a8790`);
+chat dispatch (`FUN_1407ac0e0` handler alloc, escaper trio `FUN_1407ad1b0/2d0/860`,
+send `FUN_1407ad370`, idle sweep `FUN_1407ae6c0`, join `FUN_1407ae990`, filter
+`FUN_1407af9a0`, recent-speech decay `FUN_1407b0290`); social manager 0x1120 B
+(`FUN_1407b3a00`, member records 0x1c0 B `FUN_1407b3480`, voice bands
+`FUN_1407b25e0`); group manager 0x1c30 B (`FUN_1407b6f50`) + stat tracker 0x6118 B
+(`FUN_1407baa80`, merge `FUN_1407babf0`); voice settings 0x1940 B (`FUN_1407bc5e0`,
+word lists `FUN_1407bc150`, channel verbs `FUN_1407bc320`); channel object 0x690 B +
+channel parser `FUN_1407c4710` (18-key ladder `0x14385c788`–`0x14385c860`) +
+settings parser `FUN_1407c2d30`; hash-D insert waves (`FUN_1407b5510/5700` ×25
+callers, `FUN_1407bd8b0/bda90/bdcc0/bdec0/be0b0/be420`, rehash roots
+`FUN_14073f9a0`/`FUN_14061ba80`); introsorts ×5 (`FUN_1407b8f70` 0x68-B,
+`FUN_1407b9b50` 0x58-B, `FUN_1407be920` 0xa0-B, `FUN_1407bf2b0` 0x70-B,
+`FUN_1407bfbe0` 0xd0-B); party assembly `FUN_1407c7560` (nested sort trio) +
+slot engine `FUN_1407c9480`/`FUN_1407cc6a0` (occupancy bitmap, first-fit/
+worst-fit); product codes `FUN_1407cb420` (`BLZBNTPUR/BLZBNTCAT`, ids 0x39–0x46);
+JSON stat export `FUN_1407c8920`.
 (37) **map lifecycle + live-ops + UI windows (37)**: 12-state map/scene load machine
    (`FUN_1407691f0`/`FUN_14076d0a0`, name table `FUN_14076a210`, hotfix stall watcher
    `FUN_14076a6b0`); 0x18a0-B hero/entity record (`FUN_140782e30`: 3×0x90 anim tables,
@@ -203,9 +242,13 @@ instances, tables and id rows from them; layers 5–6 are the client that consum
 settings, telemetry, schemas, chat/voice, hotfix patching, HUD markers, the spatial/entity
 runtime, and then, pass by pass, its halves: match-lifecycle receive (31), live gameplay loop
 (32), presentation (33), replay/cinematic (34), social + monetization (35), client diagnostics +
-audio effects (36), and map lifecycle + live-ops feed + UI windows (37: the 12-state map-load
+audio effects (36), map lifecycle + live-ops feed + UI windows (37: the 12-state map-load
 machine, the patch-note/news/esports/web-event client, the capability manager, the 0x18a0-B
-hero/entity record, the UI-window manager).
+hero/entity record, the UI-window manager), the UI-window engine room (38), and the
+party/group/voice/chat client (39: the session object, spawn rows + transform solver,
+chat dispatch with markup escaper and word-list filter, the social/group managers with
+member records and stat tracker, the channel parser, the party slot-assignment engine,
+and the Battle.net product-code category table).
 No plaintext game
 protocol (entity traffic is the `FUN_1406232f0`/`FUN_1406264c0` bitstream over an unframed
 transport — and the replay files reuse the same reader), the render device is one opaque
@@ -270,6 +313,7 @@ pass 37's per ledger 53/54 (nineteen window chunks, topped by `FUN_140784fd0` 75
 | **Capability manager (37)** | trio `0x75/0xc5/0x77` at `+0x88/+0x90/+0x98`, gate `FUN_14077b480`, hash-C id maps (`FUN_14077c4f0`), six-state table `FUN_14077b210`, device probes `FUN_14077b5e0` (`0x6e…065/f8/118/f9/fa/fb/fc/17`) | `0x14077b210` |
 | **UI-window tier (37)** | object-key scrambler `FUN_14077fef0`; window-cache giants (ledger 54); widget clone-classes ×7 (slot ids 0x2a–0x42); sorted mod rows 0x30 B key (float,u32,u64) `FUN_1407837a0`; 6-op modifier enum `FUN_140784310` (add/set/mul/min/max/clamp); 3-phase spring `FUN_140784fd0`; 0x18a0-B record `FUN_140782e30` (`0x60e93ab59bc621f8` key chain) | `0x14077fef0` |
 | **UI-window engine room (38)** | window-cache prologue `0x2d1d7705` → `_DAT_143b795a0` search + `_DAT_143b795a8` write `[(n&0xfff)+1]` (×~24 bodies); `0xd8…`-descriptor apply `func_0x140d32840(ctx,0xd8000000000XXXX)` cascades (~80 ids; `0xce13/ce14` 3-state; `0xcde0–cde5` mirrors); spring init `FUN_140788f90` + eval `FUN_140786b60` (trail ring `+0x1440`, 0x10-stride, head `+0x1650`); trail rows 0x600-B (camera) / 0x650-B (entity) via `FUN_1405a8410`, key `+0x8`/id `+0x630`; descriptor unpack `FUN_140798f80` (bools + `0x142fac3f0`/`0x142fac440`/`0x14385bfa0` selects + `0x142fac4ac..504` scales); shutdown gate `FUN_14079ecf0` (`vt+0x270`); state-gated getters `(*masked_svc+0x160/0x168/0x1f8/0x328)` selectors 2/3/5/6; u32/0x20-B introsorts (`0x1e` cutoff, explicit stack); handle lease `FUN_1407a2610` (`(n&0xfffff000)+0x1000+tls_id`, backoff ≤16); event send `FUN_1407a2340` → `FUN_140623720`, JSON-text ids `0xe0ec9c/9d/9e/a9/aa` + `0x100e01d56/57`; widget clone-ctor family (~12, slot ids 0x46–0x95, XOR-8 name pages `0x14385bb48`–`0x14385beb0`) | `0x140785e30` |
+| **Party/group/voice/chat client (39)** | session object 0x14f8 B (`FUN_1407a3540` ctor, GUID handle table 0x400 @ `+0x61`, `0x400` write-lock id getters `FUN_1407a28c0`–`0x1407a30a0`, cvar-sync ids `0xe060f0/0xe060f2/0xe0873a`); spawn rows 0x110 B (`FUN_1407a7280` ctor, `FUN_1407a73c0/75c0` fill, transform solver `FUN_1407a8a70` — parent-relative quat compose, `0x143a1a9f0/0x143a1aa0x` float-XOR, `movmskps` 7-gate, LOD gate `FUN_1407a8790`, basis `FUN_1407a78b0/8290`); chat dispatch (`FUN_1407ac0e0` alloc+post, `'<'`→`'\\<'` escaper `FUN_1407ad1b0/2d0/860`, send `FUN_1407ad370`, idle sweep `FUN_1407ae6c0` (900 s), join `FUN_1407ae990`, filter `FUN_1407af9a0` (ids `0x2f56f/2f572/31ee1/31ee2`), recent-speech decay `FUN_1407b0290` (0x61a9 gate), `0x143059b80` 23-entry toast table); social manager 0x1120 B (`FUN_1407b3a00`) + member records 0x1c0 B (`FUN_1407b3480`, hash-D insert `FUN_1405d8710`); group manager 0x1c30 B (`FUN_1407b6f50`) + stat tracker 0x6118 B (`FUN_1407baa80`, merge+sort `FUN_1407babf0`, `0x3f800000` weights); voice settings 0x1940 B (`FUN_1407bc5e0`, word lists `"res"/"reserved"/"hatespeech"` `FUN_1407bc150`, channel verbs `FUN_1407bc320`, match trio `FUN_1407bc7f0/8c0/9d0`, band resolver `FUN_1407b25e0` — `0x624dd2f1a9fbe77`÷489, `0x142fac774..784` bands); channel object 0x690 B + channel parser `FUN_1407c4710` (18 plaintext keys `0x14385c788`–`0x14385c860`) + settings parser `FUN_1407c2d30`; **hash-D waves** (`FUN_1407b5510/5700` ×25 callers, `FUN_1407bd8b0/bda90/bdcc0/bdec0/be0b0/be420`, rehash `FUN_14073f9a0`/`FUN_14061ba80` at `+3` float load); **introsorts ×5** (0x68/0x58/0xa0/0x70/0xd0-B rows, median-of-3, 0x1e cutoff); party assembly `FUN_1407c7560` (nested sort trio 0xd0/0xa0/0x70) + slot engine `FUN_1407c9480`/`FUN_1407cc6a0` (occupancy bitmap, first-fit/worst-fit two-phase claim); product codes `FUN_1407cb420` (`BLZBNTPUR/BLZBNTCAT` band `0x14385c898`–`0x14385c9b4`, ids 0x39–0x46); JSON stat export `FUN_1407c8920`; `.data` fn-ptr table `0x142f2df90…d668` | `0x1407a28c0` |
 
 ## Open threads (cheapest next query each; check/update every pass)
 
@@ -300,31 +344,43 @@ pass 37's per ledger 53/54 (nineteen window chunks, topped by `FUN_140784fd0` 75
 33. **`FUN_140c6xxxx` input family (T38-3)** — the 5.1-MB far-window stamp targets `0x140c6fba0`/`0x140c6b3db` (window reach, pass 38). Query: `python scripts/crossref.py 140c6b3db`.
 34. **Widget value appliers `FUN_1409bxxxx` (T38-4)** — `FUN_1409bcab0/1409bca70` (value apply), `FUN_1409ba800/1409ba390/1409b93c0` (player records). Query: `python scripts/crossref.py 1409bcab0`.
 35. **The 0xbd input rows (T38-5)** — `DAT_143b8ecd0/143b8ecd8` (0xbd × 0x10 B) drive the window-manager ctors and `FUN_1407880b0`'s per-frame state test. Query: dump `0x143b8ecd0`; grep forward for `143b8ecd8` readers.
+36. **The `0x142f2df90/df98/dfb0/dfa8/dfa0/d678/d670/d668` `.data` fn-ptr table (T39-1)** — the indirect-call ladder behind `FUN_1407b8010`/`FUN_1407b8680` (string-table dump + brace formatter `FUN_141c78720/78990/78df0/78ed0`). Query: dump the eight slots `0x142f2df90`–`0x142f2d668` and name the renderer.
+37. **`FUN_1407b0e90`'s stat fold (T39-2)** — the 0x1d8-walk collects `+0x1bc` u32s, folds via `func_0x000142d36860(local_78,&local_68,uVar1,local_res10[0])`, caps at `_DAT_1439be590` → `+0x110`. Query: `python scripts/crossref.py 142d36860`.
+38. **The 18-key channel-property ladder `0x14385c788`–`0x14385c860` (T39-3)** — plaintext `PTR_DAT` targets read by the channel parser `FUN_1407c4710` + settings parser `FUN_1407c2d30` (8 keys). Query: `python scripts/strlookup.py --pool rdata_names.tsv --band 0x14385c788 0x14385c860`.
+39. **The 23-entry toast-id table `0x143059b80` (T39-4)** — `{id, guid}` 0x10-B rows ×0x17 read by `FUN_1407b0d20` (the first hardcoded id dictionary of the read). Query: dump `0x143059b80`–`0x143059cf0`.
+40. **The `0x14213f7df` far-window region (T39-5)** — 9 stamps +26.7 MB from `FUN_1407c8f50` (shared with pass-38's `FUN_14078f550`, 88 stamps). Which chunk owns it? Query: grep chunks for `14213f7df`.
 
-CLOSED (machine): fd9670 recount; provenance; `0x1411b8070`; thread 43; thread 20 (`max refs:`); JSON writer/parser/CSV consumer (31/32); XOR-8 salt keys; presence-failure events; ledgers 1–4, 6, 9–12, 14, 17–21, 25, 28–29, 35, 37–38, 40 (archive). Pass 36 closes T35-1 (window split) + T35-3 (no socket layer in range). **Pass 37 closes T36-3 partially** (masked chains `0x309bbf8525c62fd2` + `0x60e93ab59bc621f8` now mapped) and the pass-36 watch item (a): the `FUN_140760130` forwards `FUN_140760c30/140761230/1407615c0` are read. **Pass 38 closes T37-4** (0x650-B = per-entity trail rows, 0x600-B = camera trail rows, reader `FUN_140786b60`) and the pass-37 watch item (a): the `FUN_140786760/1407880b0/14078dd90/14078e4e0` offcut family is read in full.
+CLOSED (machine): fd9670 recount; provenance; `0x1411b8070`; thread 43; thread 20 (`max refs:`); JSON writer/parser/CSV consumer (31/32); XOR-8 salt keys; presence-failure events; ledgers 1–4, 6, 9–12, 14, 17–21, 25, 28–29, 35, 37–38, 40 (archive). Pass 36 closes T35-1 (window split) + T35-3 (no socket layer in range). **Pass 37 closes T36-3 partially** (masked chains `0x309bbf8525c62fd2` + `0x60e93ab59bc621f8` now mapped) and the pass-36 watch item (a): the `FUN_140760130` forwards `FUN_140760c30/140761230/1407615c0` are read. **Pass 38 closes T37-4** (0x650-B = per-entity trail rows, 0x600-B = camera trail rows, reader `FUN_140786b60`) and the pass-37 watch item (a): the `FUN_140786760/1407880b0/14078dd90/14078e4e0` offcut family is read in full. **Pass 39 closes T38-1's band question negatively-positively** (the XOR-8 mechanism does carry readable ASCII — the `0x14385c898` product-code band decodes; only the *name* band `0x14385bb48`–`0x14385beb0` is stripped) and answers the pass-38 watch item (e) — the tier past the UI-window engine room is the party/group/voice/chat client, not a new subsystem.
 
 ## Next pass
 
 Resume range: **`NEXT.txt`** — written by `python scripts/pass_next.py` from
 `state.json` + `--max`; regenerate it after every `--update`, never hand-edit.
-Pass 38 ends at `FUN_1407a2800` (the string-intern hash-table dtor), engine-runtime
-stratum `0x14054fea0` OPEN. Run `pass_measure.py <start> <end>`, quote the block or
-cite its `--json` digest, run `--update`, refresh `NEXT.txt` and this file. Watch
-for: (a) **window-cache continuation** — the resume range starts at `0x1407a28c0`,
-just past the 0x48-B player-record family; the `0x2d1d7705` prologue signature and
-the `FUN_1407a2610` handle lease (109 callers) should keep appearing; (b) the
-**`FUN_140c6xxxx` input family** (thread 33) — the pass-38 far-window stamps point
-there; (c) the **render-object tier** `FUN_141ff40f0/141ffed40/142042cc0/142043170`
-(thread 28) — `FUN_141ffab90` also called, still undefined; (d) the **material
-family `FUN_142cb…`/`FUN_142cc…`** (thread 32) — `FUN_140792560` walks it, bodies
-ahead; (e) whether the UI-window tier gives way to a new subsystem past
-`0x1407cc6a0`. Do not re-run a counted range through `--update` (ledger 5); no
-ciphertext script line (ledger 7); leave the stale flags (ledgers 11/16) alone;
-never treat `0x826e…`/`0xca334801`/`0x4343ffa4`-family or offcut-call addresses
-as data (ledger 20); ledgers 24/31/39/44/49/53/54 for gaps; `size=` is not coverage
-(ledger 30); overlapping windows per ledgers 39/47/49 — treat the pass-37/38
-window-cache giant set (`FUN_14077d100/d230`, `FUN_140782390/2910/2d70/2e30`,
-`FUN_1407839b0`, `FUN_140784720/b50/fd0`, `FUN_140786360/786760/786b60/7871b0/
-7875e0/787b50/7880b0/788710/788b60/788f90/789970/78d450/78e600/78ee30/7911d0/
-792560/7951c0/7980c0/7984f0/798950/79a5b0/79a9d0/79af50/79bc50/79c080/79c500`)-shaped
-duplicates as one cascade each.
+Pass 39 ends at `FUN_1407cc6a0` (the party slot-assignment engine's conflict
+resolver), engine-runtime stratum `0x14054fea0` OPEN. Run
+`pass_measure.py <start> <end>`, quote the block or cite its `--json` digest,
+run `--update`, refresh `NEXT.txt` and this file. Watch for: (a) **party-tier
+continuation** — the resume range starts at `0x1407cce30`, right at the
+`FUN_1407cc6a0` post-pass helpers; the hash-D insert/rehash family
+(`FUN_14073f9a0`/`FUN_14061ba80`, thread of ledger-32 D) and the 0x188-B
+party-row family should keep appearing; the chat/voice settings object
+(`0x142f2df90` fn-ptr table, T39-1) and the slot engine's sort trio may
+recur; (b) the **`FUN_14099xxxx` store/platform API family** (thread 18) —
+the read is now ~1.6 MB of `.text` away from `0x14099xxxx`; (c) the
+**`FUN_14213f7df` far-window region** (T39-5) — 9 stamps from this pass, 88
+from pass 38; when a resume range's `window reach:` line names it, sweep for
+the defining chunk; (d) the **`FUN_140d1xxxx` sound assets** (thread 22) and
+**`FUN_142cb…`/`FUN_142cc…` material family** (thread 32) — both called from
+tiers already read, bodies still ahead in address order; (e) whether the
+party/group/voice/chat tier gives way to a new subsystem past `0x1407f68b0`
+(the NEXT.txt range end). Do not re-run a counted range through `--update`
+(ledger 5); no ciphertext script line (ledger 7); leave the stale flags
+(ledgers 11/16) alone; never treat `0x826e…`/`0xca334801`/`0x4343ffa4`-family
+or offcut-call addresses as data (ledger 20); ledgers 24/31/39/44/49/53/54/55
+for gaps; `size=` is not coverage (ledger 30); overlapping windows per ledgers
+39/47/49 — treat the pass-37/38 window-cache giant set (`FUN_14077d100/d230`,
+`FUN_140782390/2910/2d70/2e30`, `FUN_1407839b0`, `FUN_140784720/b50/fd0`,
+`FUN_140786360/786760/786b60/7871b0/7875e0/787b50/7880b0/788710/788b60/
+788f90/789970/78d450/78e600/78ee30/7911d0/792560/7951c0/7980c0/7984f0/798950/
+79a5b0/79a9d0/79af50/79bc50/79c080/79c500`)-shaped duplicates as one cascade
+each; pass 39 had zero such duplicates — if they return, apply the same rule.
