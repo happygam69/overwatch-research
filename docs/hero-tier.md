@@ -145,8 +145,9 @@ The hero-select screen object is a **0x1b00-byte** construction in `FUN_1408722a
 - the sentinel **`0x13e`** (318) at `+0x345`/`+0x1a28`.
 
 That constant is the "none" value used by the auto-fill/hero-kind checks, not a measured
-roster size. The pass-43 record's parenthetical "= 62" is an arithmetic slip: `0x3e` is
-62, but the code writes and compares `0x13e` (Correction 59). Whether `0x13e` is also a
+roster size. The pass-43 record's parenthetical "= 62" is an arithmetic slip: the chunk
+text writes and compares the literal `0x13e` (318) at `+0x345`/`+0x1a28`/`+0x1a2c`, never
+`0x3e` (Correction 59). Whether `0x13e` is also a
 hero-table size is still open (T43-7); do not quote 62 as the number of playable heroes.
 
 The team-assembly path:
@@ -216,8 +217,9 @@ pass 43's screen code.
   their bodies are unread.
 - The `0x140bfxxxx` hero-record row API is named from the effect store but its bodies are
   unread.
-- The exact meaning of the `0x13e` sentinel is open (T43-7). It is 318, not 62; if it is
-  a hero-table size, cross-check it against the pass-42 hero banks before using it.
+- The exact meaning of the `0x13e` sentinel is open (T43-7). It is 318; the chunk text
+  writes the full literal, not a low byte. If it is a hero-table size, cross-check it
+  against the pass-42 hero banks before using it.
 - The network side of abilities is the bitstream, not a separate schema. The ability
   ids/events are catalogued in `CODE_MAP.md`, but the wire format remains open.
 

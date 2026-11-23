@@ -10,7 +10,10 @@ pass 27, and every later pass reads code that consumes the objects it built.
 The main evidence is the pass-27 record
 [`0x1404bfe00-0x14054ea50.md`](../ranges/0x1404bfe00-0x14054ea50.md), the pass-15
 synthesis in [`CODE_MAP_ARCHIVE.md`](../CODE_MAP_ARCHIVE.md) §"The registry machine", and
-the cumulative counts in [`CODE_MAP.md`](../CODE_MAP.md).
+the cumulative counts in [`CODE_MAP.md`](../CODE_MAP.md). The consolidated pass
+([`0x14010c120-0x14012bcd0.md`](../ranges/0x14010c120-0x14012bcd0.md)) and pass 4
+([`0x14012bee0-0x140156840.md`](../ranges/0x14012bee0-0x140156840.md)) carry the early
+zone-by-zone detail.
 
 ## Where it sits
 
@@ -78,8 +81,8 @@ copy wrappers, 280 sorted-insert builders, 261 nested-atexit builders and 326 id
 records. These are machine counts from `state.json`; do not add them by hand.
 
 **Builders.** A builder allocates an object, decrypts a name page, calls one of the two
-decryptor helpers (`func_0x140fd4f30` or `func_0x140fd4f70`), publishes the result with
-`func_0x140fd4fb0`, and stores a row containing the class root, the instance pointer and a
+decryptor helpers (`func_0x0001421d4f30` or `func_0x0001421d4f70`), publishes the result with
+`func_0x0001421d4fb0`, and stores a row containing the class root, the instance pointer and a
 live flag. The decryptor hash is a *type name*, so many builders can share one hash — the
 opposite of the registration-hash regime. The exact row slots differ between the builder
 family and the later row layout; the pass-15 synthesis quotes `+0`/`+8`/`+0x78`, while the
@@ -87,7 +90,7 @@ cumulative conventions table quotes `+0x20`/`+0x28`/`+0x98`/`+0x9c`. Treat the s
 record-specific, not universal.
 
 **Copy wrappers.** A wrapper does not decrypt anything. It copies an existing row with
-`func_0x000140fd2d70`, publishes it with `func_0x140fd4fb0`, and marks it as not newly
+`func_0x0001421c2d70`, publishes it with `func_0x0001421d4fb0`, and marks it as not newly
 constructed. This is how one built object is published under several roots. A small
 variant also writes the one plaintext symbol family in the range, the
 `PTR_s_CompilerIDFilter_*` pointers.
@@ -112,7 +115,9 @@ in the undumped `0x142f0xxx` region.
 **CompilerIDFilter shells and struct schemas.** Two special cases matter:
 
 - Twelve small functions store a flag and one of the twelve
-  `&PTR_s_CompilerIDFilter_*` labels, and four 244-B wrappers root registration rows on
+  `&PTR_s_CompilerIDFilter_*` labels (five in the pass-3/4 records, five more in
+  pass 15, the last in pass 21 — the count is 12, not 9; the pass-15 record
+  reconciled it), and four 244-B wrappers root registration rows on
   those payloads. This is the only readable symbol family in the registry and the direct
   evidence that the registry writes the shader/compiler filter machinery.
 - At `0x140519090` (pass 27, chunk 0235) the registry registers physics/reflection

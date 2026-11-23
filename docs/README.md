@@ -36,7 +36,8 @@ evidence. They have no line budget because they are not part of the pass loop.
 ## Scope of this snapshot
 
 These pages were generated after pass 43, which ends at `0x140874660` in chunk `0402`
-(402 contiguous chunks, 23,415 functions, 6,486,312 B of declared `size=`, or 15.12 % of
+(chunks `0000`–`0402` inclusive — 403 chunk indices, `0000`–`013` of them read as
+passes 1–2 pre-protocol — 23,415 functions, 6,486,312 B of declared `size=`, or 15.13 % of
 `.text`). The engine-runtime stratum is still open; the registry machine is closed.
 
 ## When these pages are updated

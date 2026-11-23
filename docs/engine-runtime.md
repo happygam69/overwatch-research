@@ -16,9 +16,9 @@ cover those two subsystems separately.
 The boundary is not a single function. The last registry constructs run through pass 27,
 and the same pass contains the first runtime machinery:
 
-- `0x14053f6b0`–`0x14058200x` is the bootstrap/obfuscation zone: module resolution,
+- `0x14053f6b0`–`0x140582000` is the bootstrap/obfuscation zone: module resolution,
   signature scanning, anti-tamper checks, the PE entry trampoline `0x140540fd0`, and the
-  masked-pointer layer.
+  masked-pointer layer. It opens within pass 27's range and the same pass closes it.
 - `FUN_140541200` is the signature scanner (VirtualProtect + byte-pattern `memcmp`).
 - `FUN_140541450` and `FUN_1405414a0` are the large obfuscated anti-tamper bodies.
 - `FUN_140541b50` is an obfuscated job dispatcher over a readiness bitfield; it is the
@@ -77,10 +77,12 @@ specialisations over that allocator. Do not key on a symbol name such as "alloca
 key on the call shape.
 
 **Hash maps.** There are several families. The ones named in `CODE_MAP.md` are
-hash A (64-bit keys), hash B (32-bit keys), hash C (the `0x200000`/`~key` family), hash D
+hash A (the `k*0x40000+~k` family, 64-bit keys), hash B (32-bit keys, the
+`k*0x1001+0x7ed55d16` mix), hash C (the `k*0x200000+~k` family), hash D
 (the `-0xae502812aa7333`/`-0x3b314601e57a13ad` double-mix), and a later open-addressing
 set using `(x*0x40000+~x)*0x15*0x41`. The families are distinct; do not merge them just
-because two call sites look similar.
+because two call sites look similar. Hashes A and the seen-set chain share their
+arithmetic; they are counted as one family in `CODE_MAP.md`.
 
 **Handles.** A common 16-byte row is `{u32 handle, u32 pad, u64 entity_ptr}`. The main
 handle table has 0xfff buckets and a generation/lease helper that packs a page and a
@@ -162,7 +164,9 @@ API at `0x1421e0000+` are also consumer-side only.
 ## What is still open
 
 - **The runtime stratum itself.** Pass 43 ends at `FUN_140874660`; the cursor is at
-  `0x140874660` (19.55 % of functions, 15.12 % of declared `.text` bytes). The next range
+  `0x140874660` (19.55 % of functions, 15.13 % of declared `.text` bytes, from
+  `state.json`'s totals: 23,415 files / 6,486,312 `size=` against 119,757 functions /
+  42,864,695 B `.text`). The next range
   is chunks `0403`–`0410`, `.text` `0x140875440`–`0x1408a6750` (see `NEXT.txt`).
 - **The protocol.** Command ids, event ids and message ids are catalogued, but the wire
   format is known only as "the bitstream". There is no plaintext schema.

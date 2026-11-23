@@ -26,10 +26,10 @@ Corpus: 2,228 chunks, 119,757 functions, 42,864,695 B `.text`. Passes 1–22 arc
 | 34–38 | `0307`–`0359` | `0x14069bb80`–`0x1407a2800` | 1,563 | `ranges/0x14069bb80-…` … `0x140785e30-…` |
 | 39–42 | `0360`–`0394` | `0x1407a28c0`–`0x1408493b0` | 2,076 | `ranges/0x1407a28c0-…` … `ranges/0x14081d520-0x1408493b0.md` |
 | 43 (8-chunk) | `0395`–`0402` | `0x140849a10`–`0x140874660` | 316 | `ranges/0x140849a10-0x140874660.md` |
-| **total** | **402, contiguous** | `0x140001000`–`0x140874660` | **23,415** | machine-verified (`state.json`) |
+| **total** | **403 indices, `0000`–`0402`** | `0x140001000`–`0x140874660` | **23,415** | machine-verified (`state.json`) |
 
 Machine-verified (`state.json` after pass 43): files 23,415 (19.55 %), Σ `size=` 6,486,312
-(15.12 %); classes reg 7,956 / wrapper 1,954 / builder 1,717 / sorted 280 / atexit 261 /
+(15.13 %); classes reg 7,956 / wrapper 1,954 / builder 1,717 / sorted 280 / atexit 261 /
 record 326 / other **10,921**; 7,956 registration calls = 7,952 ciphertext + 4 plaintext
 (7,955 distinct; one plaintext hash ×2 — Corrections 16); `d4f30` 1,188 / `d4f70` 1,350 / `d4fb0` 4,492 / `c2d70`
 4,212 / `c2d50` 326 / `c7880` 261 / `atexit` 315; records 326. Passes 27–43 = consumer only.
@@ -75,8 +75,8 @@ shared UI schema** (`FUN_14085c450`/`FUN_140861ab0` write the same ids).
 
 ## What the code is — cumulative synthesis (43 passes; evidence unless marked [inference])
 
-`.text` is catalogued in entry-address order. After 402 chunks the cursor is at `0x140874660`
-(19.55 % of functions, 15.12 % of `.text`). Names printed `func_0x…` have **no decompiled body
+`.text` is catalogued in entry-address order. After 403 chunk indices (`0000`–`0402`) the cursor is at `0x140874660`
+(19.55 % of functions, 15.13 % of `.text`). Names printed `func_0x…` have **no decompiled body
 in this dump** — registrar, decryptors `d4f30`/`d4f70`, writer `c2d50`, helpers `c2d70`/`c7880`,
 the `0x140543xx0`/`0x1405674xx` decoder family, settings accessors, component getters, the
 hotfix HTTP client, CSV iterator, pass-32 cipher `FUN_142454xxx`, the render tier
