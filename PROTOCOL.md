@@ -91,6 +91,20 @@ A pass may read ahead of the census (the script's classes are call-shape heurist
 novel constructs will land in `other`): anything the script cannot classify must be read
 raw and, if it is a new construct, given an address boundary in `CODE_MAP.md`.
 
+## Milestones and findings
+
+The pass loop is optimized for carrying read state, not for explaining the system to a
+new reader. `docs/` is the prose companion: one page per subsystem, no line budget,
+updated only at **milestone passes** — when a named subsystem closes (for example the
+registry machine at pass 27), when a named tier ends (the UI-window engine at pass 38,
+the settings/menu/social tier at pass 43), or when the user asks. Do not update `docs/`
+on an ordinary pass, and do not read it instead of `CODE_MAP.md` before a pass.
+
+At a milestone, write conclusions with addresses and link the records that carry the
+evidence. Keep it plain prose; do not paste measure blocks, do not recompute totals, and
+do not turn it into a second pass log. Add a page when a subsystem has no home, and list
+it in `docs/README.md`. The findings pages are not part of the `CODE_MAP.md` line budget.
+
 ## Recording rules
 
 - Every claimed fact is either **evidence** (visible in the text / measured) or
@@ -127,7 +141,8 @@ leaves no room to write the record.
 ≤300-line budget: coverage, corrections ledger, synthesis, one-line conventions, open
 threads, next-pass instructions. Per-pass narrative, highlights and method notes live
 only in `ranges/`. `state.json` is the machine ledger behind every cumulative number.
-The long-form map through pass 15 is preserved in `CODE_MAP_ARCHIVE.md`.
+The long-form map through pass 15 is preserved in `CODE_MAP_ARCHIVE.md`. The reader-facing
+prose findings live in `docs/` and are not part of this budget; see `docs/README.md`.
 
 Corpus: 325,787,798 raw index bytes → 283,641,800 post-strip; `.text` 42,864,695 B;
 119,757 functions; 2,228 chunks (`index.json`).

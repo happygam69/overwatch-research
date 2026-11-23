@@ -1,7 +1,6 @@
 # CODE_MAP — cumulative map of the systematic `.text` read
 
-**Read in full before every pass; update after every pass. Hard budget: ≤300 lines** (raised
-from 250→300→350 across passes 23–39; re-tightened to 300 at pass 40 — see Corrections 56).
+**Read in full before every pass; update after every pass. Hard budget: ≤300 lines** (raised from 250→300→350 across passes 23–39; re-tightened to 300 at pass 40 — see Corrections 56).
 Per-pass narrative lives ONLY in `ranges/`; cumulative numbers come from `state.json` (via
 `scripts/pass_measure.py`) — never hand-add. Long-form archive: `CODE_MAP_ARCHIVE.md`.
 
@@ -15,6 +14,7 @@ Per-pass narrative lives ONLY in `ranges/`; cumulative numbers come from `state.
 | `scripts/pass_measure.py` / `ranges/*.md` | canonical per-pass measurement (block quoted verbatim in records or `--json` digest cited; `max refs:` = automatic crossref of the range max; `largest (text)` vs `sum_size (binary)`) / per-pass records — the evidence base |
 | `scripts/gap_report.py` | per-range gap classes (`giant`/`offcut`/`hole`; `--offcuts` = corpus sweep) + `window reach:` far-window watch list (ledger 53) |
 | `rdata_names.tsv` / `scripts/rdata_names.py` | plaintext `.rdata` strings (16,832 rows) / regenerator; query via `strlookup.py --pool rdata_names.tsv` |
+| `docs/*.md` | reader-facing findings: plain-prose subsystem pages (registry, engine, UI, hero); no line budget, milestone-only; conclusions cite records |
 
 ## Coverage
 
@@ -30,8 +30,8 @@ Corpus: 2,228 chunks, 119,757 functions, 42,864,695 B `.text`. Passes 1–22 arc
 
 Machine-verified (`state.json` after pass 43): files 23,415 (19.55 %), Σ `size=` 6,486,312
 (15.12 %); classes reg 7,956 / wrapper 1,954 / builder 1,717 / sorted 280 / atexit 261 /
-record 326 / other **10,921**; 7,956 distinct ciphertext registrations + 4 plaintext rows
-(one hash ×2 — Corrections 16); `d4f30` 1,188 / `d4f70` 1,350 / `d4fb0` 4,492 / `c2d70`
+record 326 / other **10,921**; 7,956 registration calls = 7,952 ciphertext + 4 plaintext
+(7,955 distinct; one plaintext hash ×2 — Corrections 16); `d4f30` 1,188 / `d4f70` 1,350 / `d4fb0` 4,492 / `c2d70`
 4,212 / `c2d50` 326 / `c7880` 261 / `atexit` 315; records 326. Passes 27–43 = consumer only.
 
 ## Corrections ledger (machine-derived; supersedes prose in older records)
@@ -67,9 +67,9 @@ treat per ledgers 39/49; `size=` there is meaningless.**
 58. **The `0x1421exxx` family is the UI row model; the pass-42 144-stamp "ground" is one
 overlapping window** (pass 43): the stamps land inside `FUN_140867b30`'s span — per
 ledgers 39/47/49, call sites of one window, not a separate body. ~50 members read
-consumer-side (fields `0x3ff3/0x6003` child lists, `0x229a` value GUID, `0x2d95` row key;
-nodes minted as `0xa88000000000xxx` GUIDs); **the pass-42 summary field-id set is the
+consumer-side (fields `0x3ff3/0x6003` child lists, `0x229a` value GUID, `0x2d95` row key; nodes minted as `0xa88000000000xxx` GUIDs); **the pass-42 summary field-id set is the
 shared UI schema** (`FUN_14085c450`/`FUN_140861ab0` write the same ids).
+59. **The pass-43 "hero count 0x13e = 62" is an arithmetic slip.** 0x13e is 318; chunk 0402 writes and compares 0x13e as the hero-select "none" sentinel. The roster/hero-table size remains open (T43-7); never quote 62 as measured.
 
 **Closed/superseded (archive):** items 1–4, 6, 9–12, 14, 17–19, 21, 25, 28, 29, 35, 37, 38, 40, 42 — full text in `CODE_MAP_ARCHIVE.md` §Corrections archive.
 
@@ -100,7 +100,7 @@ hotfix HTTP client, CSV iterator, pass-32 cipher `FUN_142454xxx`, the render tie
    by masked key `0x74a810779e8bc160`, JSON summaries mirroring the pass-42
    field-id schema); the social tier (invites, hero-group ladder table, queue, the
    chat-entry object with two compiled regexes); and the **hero-select
-   team-assembly engine** (0x1b00-B screen object, hero count 0x13e=62, ban list,
+   team-assembly engine** (0x1b00-B screen object, sentinel 0x13e=318 — not 62, Correction 59; ban list,
    per-locale availability, role kinds `0xc880000000000cd` family, auto-fill
    suggest `FUN_140874660`);
    **(42) lobby/match-state rules tier + voice client + name-window family +
@@ -264,7 +264,7 @@ the global player-array writers (grep the literals); `0x141bba761` string-builde
 66. **T43-4 hero-select object's fn-ptrs `PTR_FUN_142f7d730/740`** (ctor +0x640/+0x648, the 0x1b00-B object's row factory pair); `crossref.py 142f7d730`.
 67. **T43-5 the regex family's match side** — ctor/compile/finalize read (`func_0x000141b1ab00`/`FUN_141b39f70`/`FUN_141b3a510`), match bodies unread; `crossref.py 141b39f70`.
 68. **T43-6 the locale system** — `func_0x000140c70eb0` index + `FUN_140c71110` row + `FUN_142ca5bf0` compare + the per-locale hero availability table; `crossref.py 140c71110`.
-69. **T43-7 hero-count 0x13e (62)** — the default/none kind in the hero-select engine; cross-check vs the pass-42 hero banks (the hero-table size?).
+69. **T43-7 hero-select sentinel 0x13e (318, not 62 — Correction 59)** — the default/"none" kind in the hero-select engine; if it is a hero-table size, cross-check vs the pass-42 hero banks.
 70. **T43-8 the `0x14091a2xx/0x14091bxxx` party-row family** (`FUN_14091a200` init, `FUN_14091b6a0/91b790` invite accept/decline; def region ~0x14091a000, chunk 0410+); `crossref.py 14091b6a0`.
 
 CLOSED (machine): fd9670 recount; provenance; `0x1411b8070`; thread 43; T20 (`max refs:`);
