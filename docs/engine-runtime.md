@@ -158,8 +158,14 @@ The cumulative picture is a complete game client, not an engine library:
 
 No plaintext game protocol has been found. Entity traffic is the bitstream; replays reuse
 it. The render device is the `FUN_141ff40f0` family. Its lifecycle is mapped from the
-consumer side, but the bodies are unread. The store API at `0x14099xxxx` and the UI list
-API at `0x1421e0000+` are also consumer-side only.
+consumer side, but the bodies are unread. The UI list API at `0x1421e0000+` is also
+consumer-side only. (The store API at `0x14099xxxx` is no longer in this class: pass 50
+read its bodies — `FUN_140993710` resolve, `FUN_1409958c0` price, `FUN_140996080`
+purchasable, `FUN_140996880` version stamp, `FUN_1409969a0` purchase-result event — and
+the `StoreSystem_C` catalog state machine behind them, with plaintext state names and a
+76-member Battle.net purchase-error enum; see
+[`ranges/0x14097f810-0x1409ab600.md`](../ranges/0x14097f810-0x1409ab600.md). Pass 50 also
+read the weapon-loadout engine and the highlight-file format.)
 
 ## What is still open
 
@@ -173,7 +179,7 @@ API at `0x1421e0000+` are also consumer-side only.
 - **Obfuscated bodies.** Several large functions are read structurally only: the
   overlapping-instruction dispatchers, some window giants, and the anti-tamper bodies.
 - **Undumped bodies.** `func_0x…` names have no decompiled body in this corpus. The
-  registrar/decryptors, the store API, the render tier, the time/random helpers and the
+  registrar/decryptors, the render tier, the time/random helpers and the
   `0x140f49xxx`/`0x140f1exxx`/`0x140d2xxxx`/`0x140d5xxxx` families are in this class.
 - **Gaps.** The corpus is missing functions in places. `scripts/gap_report.py` is the
   authority; do not assume a gap is padding. The open holes are tracked in

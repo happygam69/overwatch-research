@@ -27,14 +27,15 @@ Corpus: 2,228 chunks, 119,757 functions, 42,864,695 B `.text`. Passes 1–22 arc
 | 34–42 | `0307`–`0394` | `0x14069bb80`–`0x1408493b0` | 3,639 | `ranges/0x14069bb80-…` … `0x14081d520-0x1408493b0.md` |
 | 43–47 | `0395`–`0435` | `0x140849a10`–`0x1409237a0` | 2,192 | `ranges/0x140849a10-0x140874660.md` … `ranges/0x1408f95e0-0x1409237a0.md` |
 | 48–49 | `0436`–`0452` | `0x140923c20`–`0x14097f6b0` | 774 | `ranges/0x140923c20-0x14094f5c0.md`, `ranges/0x14094f840-0x14097f6b0.md` |
-| **total** | **453 indices, `0000`–`0452`** | `0x140001000`–`0x14097f6b0` | **25,674** | machine-verified (`state.json`) |
+| **50** | `0453`–`0460` | `0x14097f810`–`0x1409ab600` | 528 | `ranges/0x14097f810-0x1409ab600.md` |
+| **total** | **461 indices, `0000`–`0460`** | `0x140001000`–`0x1409ab600` | **26,202** | machine-verified (`state.json`) |
 
-Machine-verified (`state.json` after pass 49): files 25,674 (21.44 %), Σ `size=`
-7,521,719 (17.54 %); classes reg 7,956 / wrapper 1,954 / builder 1,717 / sorted 280 /
-atexit 261 / record 326 / other **13,180**; 7,956 registration calls = 7,952 ciphertext
+Machine-verified (`state.json` after pass 50): files 26,202 (21.88 %), Σ `size=`
+7,682,670 (17.92 %); classes reg 7,956 / wrapper 1,954 / builder 1,717 / sorted 280 /
+atexit 261 / record 326 / other **13,708**; 7,956 registration calls = 7,952 ciphertext
 + 4 plaintext (7,955 distinct; one plaintext hash ×2 — Corrections 16); `d4f30` 1,188
 / `d4f70` 1,350 / `d4fb0` 4,492 / `c2d70` 4,212 / `c2d50` 326 / `c7880` 261 / `atexit`
-315; records 326. Passes 27–49 = consumer only.
+316; records 326. Passes 27–50 = consumer only.
 
 ## Corrections ledger (machine-derived; supersedes prose in older records)
 5. **`--update` is forward-only; `--init` wipes the pass list** — `--update` over a counted range double-counts and rewinds `next_chunk`; repair is `--init`. 7. **No `ciphertext band:` line** — the `CTXT` regex needs `DAT_1438` + 6 hex digits; the band is now `0x1439a…`–`0x143b…`; extremes read from the text. 8. **`zones:` filter** prints only `reg`/`record` runs with `cnt>=3`.
@@ -53,23 +54,16 @@ atexit 261 / record 326 / other **13,180**; 7,956 registration calls = 7,952 cip
 59. **The pass-43 "hero count 0x13e = 62" is an arithmetic slip** — 0x13e is 318, the hero-select "none" sentinel (T43-7 open); never quote 62 as measured.
 60. **Census `cd360` counts `func_0x0001421cd360` (registration)** — the `FUN_141fcd360`/`FUN_141fcd900` widget pair (chunk 0404) is a *different* function; `cd360 x0` is correct (hex-collision class of ledger 7).
 
-61. **Twin-test upgrade (45)** — for large claimed twins, `diff` the bodies modulo
-address/local renaming — canonical twin evidence, stronger than the ledger-47 ratio.
-62. **Fifth hash family (46)** — open-addressing ladder `(x*0x1001+0x7ed55d16 →
-(h>>0x13^h^0xc761c23c)*0x21 → (y+0x165667b1)*0x200^y+0xe9f8cc1d → *9+0xfd7046c5 →
-(z>>0x10^0x355a4f09^z)&cap-1` over 0xc-stride {hash,next,key} rows (49: the
-audio-command table `FUN_140971460`); friends set = twin pair + reconciler.
-63. **`FUN_1409054a0` (47, size=8 vs 5050-B body) leaves its own four sub-entries
-inside its span** — treat the following decompiled set as the window's arms.
-64. **A hole whose predecessor's reach lands inside the next entry's giant is one
-span, not two gaps** (48's `0x1409487d0→0x140949130` midsection); 49's three
-giants are all this class (web-view/monitor/camera midsections, 0 holes).
+61. **Twin-test upgrade (45)** — for large claimed twins, `diff` the bodies modulo address/local renaming — canonical twin evidence, stronger than the ledger-47 ratio.
+62. **Fifth hash family (46)** — open-addressing ladder `(x*0x1001+0x7ed55d16 → (h>>0x13^h^0xc761c23c)*0x21 → (y+0x165667b1)*0x200^y+0xe9f8cc1d → *9+0xfd7046c5 → (z>>0x10^0x355a4f09^z)&cap-1` over 0xc-stride {hash,next,key} rows (49: the audio-command table `FUN_140971460`); friends set = twin pair + reconciler.
+63. **`FUN_1409054a0` (47, size=8 vs 5050-B body) leaves its own four sub-entries inside its span** — treat the following decompiled set as the window's arms. 64. **A hole whose predecessor's reach lands inside the next entry's giant is one span, not two gaps** (48's `0x1409487d0→0x140949130` midsection); 49's three giants are all this class.
+65. **Pass 50's three giants are one cascade** — `FUN_14099c9f0` (48.1 K) + `FUN_14099d190` + `FUN_14099d330` (47.2 K) share the `0x1409baxxx–0x1409bbxxx` window (halting fabrications from `0x1409bb09a`); `crossref.py` on the range max shows no second namer. **Plaintext names exist inside the stratum** — `StoreSystem_C::{LoadProductCatalog,FinishRequestingExternalProducts,RequestDynamicBundlePrice,RequestGenericProductSetRefresh,RequestNewGenericProductSet}` and vendored MFC `CVSToolsListBox`/`CMFCToolBarsToolsPropertyPage` (chunk 0459).
 **Closed/superseded (archive):** items 1–4, 6, 9–12, 14, 17–19, 21, 25, 28, 29, 35, 37, 38, 40, 42 — full text in `CODE_MAP_ARCHIVE.md` §Corrections archive.
 
-## What the code is — cumulative synthesis (49 passes; evidence unless marked [inference])
+## What the code is — cumulative synthesis (50 passes; evidence unless marked [inference])
 
-`.text` is catalogued in entry-address order. After 453 chunk indices (`0000`–`0452`) the
-cursor is at `0x14097f6b0` (21.44 % of functions, 17.54 % of `.text`). Names printed
+`.text` is catalogued in entry-address order. After 461 chunk indices (`0000`–`0460`) the
+cursor is at `0x1409ab600` (21.88 % of functions, 17.92 % of `.text`). Names printed
 `func_0x…` have **no decompiled body in this dump** — registrar/decryptors/writer/helpers,
 the `0x140543xx0`/`0x1405674xx` decoders, settings accessors, component getters, hotfix
 HTTP, CSV, pass-32 cipher, render tier, time/random, slot maps,
@@ -81,15 +75,28 @@ HTTP, CSV, pass-32 cipher, render tier, time/random, slot maps,
 3. **CRT/C++ static-init sea** `0x14003ffe0`–`0x1400fa760`: five generator templates (181-B magic-static ×2,451; 209-B locale ×354; 58-B event thunks ×284; 134-B XOR-40 ×61; 37-B `_onexit`).
 4. **Typed registry machine** `0x1400fbcb0`–`0x14054ea50` (CLOSED): nine constructs (name buffers, registration, builder, copy wrapper, sorted-insert, `{id,hash}` ×326, nested-atexit, settings registrar, CompilerIDFilter).
 5. **Runtime bootstrap + obfuscated dispatchers** `0x14053f6b0`–`0x14058200x`: PE entry, sig scanner, anti-tamper, masked-pointer layer.
-6. **Engine runtime** `0x14054fea0`→ (passes 28–49, **OPEN**). Cumulative halves, newest first:
-   **(49) settings-backend / platform-services tier** — audio-event rows;
-   **video/graphics settings engine** (four-generation state, enum belt
-   0x191/0x1b9/0x1f0/0x1f2/0x22b, apply/read masters — the pass-47 def
-   belt's biggest consumer); **web-view/JS-bridge engine** (16-method
-   FNV-1a registry, modal router); **camera controller** (transform
-   master, 8-thread pool, cvars); **voice/VO resolver tier**;
-   **highlight-save media engine** (12 async subtypes); **file-streaming
-   engine** (chunk/canary, Steam listeners); **(48) social/party/lobby
+6. **Engine runtime** `0x14054fea0`→ (passes 28–50, **OPEN**). Cumulative halves, newest first:
+   **(50) store engine + weapon/loadout tier** — JSON-DOM event-handler tier
+   (field resolvers ×573/×239/×146/×128, reward/challenge fills, replay-bookmark
+   ingest giant); **group-roster engine** (`FUN_140987890`, 0x328 rows, sort
+   modes `0x9b91xx/0x9b01d0/0x9b07df/0x9b6592`, two introsorts, 108-stub
+   interface-factory belt); **hero-weapon VFX float engine** (param block +
+   ~30-id getter/evaluator, recoil springs, TLS-RNG); **`StoreSystem_C`
+   catalog/purchase engine** — T49-1 closed (76-member Battle.net error enum,
+   plaintext state names, `FUN_140993710` resolve, version stamp `FUN_140996880`);
+   store UI model + CRC32 image cache + loot boxes; **render-object/weapon-
+   transform cascade** (`FUN_14099c9f0` + `FUN_14099d190/14099d330`, one
+   window, ledger 65); **weapon-loadout engine** (`DAT_143b8d290` svc over the
+   `DAT_143872788` template, 16 async subtypes, highlight magic `0x56c6870`/
+   branch/build/account gates); **loadout-apply/entity-transform tier**
+   (`FUN_1409a9e30`, 2nd XOR-float table `0x143a1aa10-aa3c`, rate limiter,
+   apply tick `FUN_1409ab600`); vendored MFC `CVSToolsListBox`;
+   **(49) settings-backend / platform-services tier** — audio rows; video/
+   graphics settings engine (enum belt 0x191/0x1b9/0x1f0/0x1f2/0x22b, apply/
+   read masters); **web-view/JS-bridge** (16-method FNV-1a registry, modal
+   router); **camera controller** (master + 8-thread pool); voice/VO
+   resolver; highlight-save media (12 async subtypes); file-streaming
+   (chunk/canary, Steam listeners); **(48) social/party/lobby
    tier + custom-game settings engine** — lobby-browser, 0x1a0-B lobby
    rows, party ctors + carousel, **settings state engine
    `0x1409484c0`–`0x14094f5c0`** (store-gate ×6, 9 enum pages);
@@ -125,51 +132,24 @@ HTTP, CSV, pass-32 cipher, render tier, time/random, slot maps,
 *match receive* (31: bitstream ×341/×248, dispatcher, saved-match); *gameplay loop*
 (32: event bus, entity runtime, master tick, JSON text engine); *presentation* (33:
 VFX engine, 0x18a0-B record); *replay/cinematic* (34: demo system, chat/Markdown);
-*store/social* (35–36: StoreSystem_C, ruleset ids, `__PlaceOrderWithVirtualCurrency`,
-SAPI); *map/live-ops* (37: 12-state load machine); *UI engine* (38: window
-cache, springs, `FUN_140798f80`); *party client* (39: spawn solver
-`FUN_1407a8a70`, slot engine `FUN_1407c9480`);
-*match/media tier* (40: hero-select `FUN_1407e1e40`, match-history
-`FUN_1407ed2e0`, generational handles `FUN_1407dd910/9c0/a70`, roster);
-*hero-ability tier* (41: hero entity `FUN_140802620/2660`, stat getter
-`FUN_1408038e0/ed0`, window family `FUN_14080c740`-set, entity-view);
-*lobby/rules tier* (42: HUD `FUN_14081dfe0`, voice `FUN_140837fa0`, rules
-`FUN_140827790`-set, summary `FUN_1408493b0`); *UI/menu tier*
-(43: settings `FUN_14084b060/b750/bfb0`, kill-feed `FUN_1408551d0`, BattlePass
-`FUN_14085c850`-set, hero-select `FUN_1408722a0/872b90`); *presentation stack*
-(44: scoreboard `FUN_140882470/1408831d0/1408845b0`, HUD `FUN_1408935a0/
-140897dc0`, hero-info screen `FUN_14089efe0–1408a6750`); *hero-record/award
-tier* (45: data layer `FUN_1408a6970–1408aadc0`, RTTI `FUN_1408b3780`, row
-API `FUN_1408bf070–1408bf5c0`, vote twins `FUN_1408c8960/1408cb770`);
-*post-round social/group tier* (46: unlock belt `FUN_1408d8490–1408d9250`,
-channel engine `FUN_1408e1b90/1408e2e10`, friends giants
-`FUN_1408eaf20/1408eb720/1408eaf40`, groups `FUN_1408ee060`, scoreboard
-`FUN_1408f62a0/1408f6d50`); *post-round summary/data tier* (47: map-stat
-master `FUN_1408fba90`, summary engine `FUN_140905280–140909e10`,
-**settings def belt `FUN_1409124b0–140917120`**, **party dispatcher
-`FUN_14091a4c0`**, award belt `FUN_1409207b0–1409237a0`);
-*social/party/lobby tier* (48: hero-filter `FUN_1409262b0`, lobby-browser
-`FUN_140929cb0`, roster build `FUN_14092c130`, lobby-player rows
-`FUN_14092f020–140930130`, team-player router `FUN_1409366e0`,
-roster shuffle `FUN_140939030`, team-member card `FUN_14093c8c0`,
-party carousel `FUN_140941d80`, **party roster walk `FUN_140945f40`
-(range max)**, settings engine `FUN_1409487d0–14094f5c0`);
-*settings-backend/platform tier* (49: audio-event router `FUN_1409507e0`,
-video settings engine `FUN_140958580/14095bd80/14095cee0`, display list
-`FUN_14095ad70`, **web-view master `FUN_140965f80` + JS dispatcher
-`FUN_140969640` + modal router `FUN_140968b80`**, task queue
-`FUN_14096c040`, camera cvars `FUN_14096c290`, **camera master
-`FUN_14096cb30` + 8-thread spawner `FUN_14096e240`**, VO filter
-`FUN_140971780/140973d80`, hero-voice table `FUN_140974c70`,
-highlight master `FUN_140977cd0/140979010`, **chunk engine
-`FUN_14097a660/14097ab40` + canary loop `FUN_14097b830`**, Steam
-listeners `FUN_14097c790`–`14097f6b0`).
+*store/social* (35–36: StoreSystem_C, ruleset ids, `__PlaceOrderWithVirtualCurrency`, SAPI); *map/live-ops* (37: 12-state load machine); *UI engine* (38: window cache, springs, `FUN_140798f80`); *party client* (39: spawn solver `FUN_1407a8a70`, slot engine `FUN_1407c9480`);
+*match/media tier* (40: hero-select `FUN_1407e1e40`, match-history `FUN_1407ed2e0`, generational handles `FUN_1407dd910/9c0/a70`, roster); *hero-ability tier* (41: hero entity `FUN_140802620/2660`, stat getter `FUN_1408038e0/ed0`, window family `FUN_14080c740`-set, entity-view); *lobby/rules tier* (42: HUD `FUN_14081dfe0`, voice `FUN_140837fa0`, rules `FUN_140827790`-set, summary `FUN_1408493b0`); *UI/menu tier* (43: settings `FUN_14084b060/b750/bfb0`, kill-feed `FUN_1408551d0`, BattlePass `FUN_14085c850`-set, hero-select `FUN_1408722a0/872b90`); *presentation stack* (44: scoreboard `FUN_140882470/1408831d0/1408845b0`, HUD `FUN_1408935a0/140897dc0`, hero-info screen `FUN_14089efe0–1408a6750`); *hero-record/award tier* (45: data layer `FUN_1408a6970–1408aadc0`, RTTI `FUN_1408b3780`, row API `FUN_1408bf070–1408bf5c0`, vote twins `FUN_1408c8960/1408cb770`); *post-round social/group tier* (46: unlock belt `FUN_1408d8490–1408d9250`, channel engine `FUN_1408e1b90/1408e2e10`, friends giants `FUN_1408eaf20/1408eb720/1408eaf40`, groups `FUN_1408ee060`, scoreboard `FUN_1408f62a0/1408f6d50`); *post-round summary/data tier* (47: map-stat master `FUN_1408fba90`, summary engine `FUN_140905280–140909e10`, **settings def belt `FUN_1409124b0–140917120`**, **party dispatcher `FUN_14091a4c0`**, award belt `FUN_1409207b0–1409237a0`); *social/party/lobby tier* (48: hero-filter `FUN_1409262b0`, lobby-browser `FUN_140929cb0`, roster build `FUN_14092c130`, lobby-player rows `FUN_14092f020–140930130`, team-player router `FUN_1409366e0`, roster shuffle `FUN_140939030`, team-member card `FUN_14093c8c0`, party carousel `FUN_140941d80`, **party roster walk `FUN_140945f40` (range max)**, settings engine `FUN_1409487d0–14094f5c0`); *settings-backend/platform tier* (49: audio router `FUN_1409507e0`, video engine `FUN_140958580/14095bd80/14095cee0`, web-view master `FUN_140965f80` + JS dispatcher `FUN_140969640` + modal router `FUN_140968b80`, camera cvars `FUN_14096c290` + master `FUN_14096cb30` + 8-thread spawner `FUN_14096e240`, VO filter `FUN_140971780/140973d80`, highlight master `FUN_140977cd0/140979010`, chunk engine `FUN_14097a660/97ab40` + canary `FUN_14097b830`, Steam listeners to `FUN_14097f6b0`);
+*store/loadout tier* (50: DOM resolvers `FUN_14098def0/14098de10/14098db60/
+14098dd30/14098dc40`, roster master `FUN_140987890` + sorts `FUN_14098b8b0/
+14098bac0`, VFX float engine `FUN_140990550/1409910a0/140991950`, store
+core `FUN_140993c80/140995520/1409957f0/140993710/140996880`, JSON tag
+formatter `FUN_140998be0`, UI model `FUN_14099a9e0` + image cache
+`FUN_140999c60/14099c460` + loot boxes `FUN_14099a400`, transform cascade
+`FUN_14099c9f0/14099d190/14099d330/1409a9e30`, loadout engine
+`FUN_14099f4d0/14099fc60/1409a1570/1409aaea0/1409ab600` + highlight writer
+`FUN_1409a3bf0`/validator `FUN_1409a0330`, async tickets `FUN_1409a4ec0`,
+map/region `FUN_1409a60f0/1409a6050`).
 
 **Where the data lives** (full table in the archive; live additions):
 
 | band | content |
 |---|---|
-| `0x143848d40`–`0x1438631A0` | XOR-8 name/payload ciphertext, extending pass by pass (names ≤41; 'Unknown' belt 41; voice/device 42; BattlePass/chat-regex/log pages 43; hero-info pagination + settings-error pair `0x143861180/1200` 44; account-banner/highlight 45; in-place pairs 46; lobby-loc config + settings-error pages + `0x1438616b0 'steamid'` + row-id string pair 47; **'Unknown' pairs `0x143861730/748/0x770/778` + the 7-page enum-name error belt `0x143861DA0–0x143862208` (CustomGame/Party enums, ProfileVisibility, AudioMix ×2) — all 48; 49 adds the graphics-enum/web-view/modal/camera-cvar/highlight/streaming belt `0x143862320–0x1438631A0` (49 pages, 44 named)**) |
+| `0x143848d40`–`0x1438631A0` | XOR-8 name/payload ciphertext, extending pass by pass (names ≤41; 'Unknown' belt 41; voice/device 42; BattlePass/chat-regex/log pages 43; hero-info pagination + settings-error pair `0x143861180/1200` 44; account-banner/highlight 45; in-place pairs 46; lobby-loc config + settings-error pages + `0x1438616b0 'steamid'` + row-id string pair 47; **'Unknown' pairs `0x143861730/748/0x770/778` + the 7-page enum-name error belt `0x143861DA0–0x143862208` (CustomGame/Party enums, ProfileVisibility, AudioMix ×2) — all 48; 49 adds the graphics-enum/web-view/modal/camera-cvar/highlight/streaming belt `0x143862320–0x1438631A0` (49 pages, 44 named); 50 adds the store belt `0x143863e58`–`0x1438650xx` (94 named: the 76-member Battle.net purchase-error enum `0x143864110–0x143864C38` + purchase-state + catalog keys + `{0}` + mismatch trio) — all strscan-named, plus ~90 in-place decodes** |
 | `0x1438b8e50`–`0x1439fa330` | registry ciphertext; triplet-stub page |
 | `0x143a155xx`–`0x143b81a0x` | XOR-40 keys, settings names, runtime block (~250 feature flags `0x143b945b8–0x143b9c5c0`), **pass 40: settings/observer block `0x143b90c30–0x143b90ea8`** |
 | `0x143cf0000`+ / `0x1441e18f0`+ | RTTI, reg outputs, settings descriptors, config globals; plaintext reg outputs, struct schemas, record pools; TLS RNG base `0x144180fa0`, time scale `0x14415f7c8/f7f8` |
@@ -180,13 +160,15 @@ infra (28–30), match receive (31), gameplay loop (32), presentation (33), repl
 social/store (35–36), map/UI engine (37–38), party/voice (39), match/media (40), hero
 stats (41), lobby rules (42), menu/UI (43), presentation (44), hero-record/awards (45),
 post-round social (46), summary/awards + def belts (47), social/party/lobby + settings
-(48), settings-backend/platform-services (49). No plaintext game protocol (entity
+(48), settings-backend/platform-services (49), store engine + weapon/loadout
+(50). No plaintext game protocol (entity
 traffic is the bitstream; replays reuse it); the render device is `FUN_141ff40f0`
 (lifecycle mapped). Confidence: counts/shapes/bands measured; construct labels are
 shape-based inference; obfuscated bodies read structurally only.
 
 **Known limits.** (a) `func_0x…` bodies absent (synthesis list; offcuts: `0x14068xxxx`,
-`FUN_141da/141db`, `FUN_14099xxxx` store API (**6+ consumer families read to 49**),
+`FUN_141da/141db`, `FUN_14099xxxx` store API (**READ 50** — T49-1; remaining
+far callers at `0x140c7xxxx/0x140c8xxxx`),
 `FUN_140d1xxxx` sound, render tier, `0x140f49xxx`/`0x140f1exxx`,
 `0x140d2xxxx`/`0x140d5xxxx` (consumed 44), `0x140a6xxxx` (consumed 44/45;
 `0x140912xxx–0x140916xxx` + `0x14091axxx` belts READ 47)). (b) XOR-8 keys are per-record salts. (c) `0x142f0…`–`0x142f2b…`
@@ -196,15 +178,18 @@ thunks absent. (d) Corpus gaps: pass 30: 12 × >1 KiB; 34: 4/11,844 B; 35: 6/18,
 (T46-1) + 1 giant+offcut (96.5 %); 47: 1 hole / 1,080 B (T47-1) + 3 giants;
 48: 1 hole / 1,052 B + 1 giant (T48-1; 98.5 % span); **49: 0 holes / 0
 offcuts + 3 window-giant midsections (89.7 % span; the 93 `size=` gaps are
+window midsections, entries read individually)**; **50: 1 hole / 1,757 B
+(T50-1) + 3 window-giant midsections (89.6 % span; 136 `size=` gaps are
 window midsections, entries read individually)**.
-(e) Window chunks per ledgers 39/47/49/53/57/61: the pass-37/38 window-cache set,
-the pass-41 `FUN_14080c740` set and the pass-42 name-window family are the large
-cascades — `size=` meaningless there; pass 45's vote twins; pass 46's
-friends-screen set; pass 47's `FUN_1409006d0` (57.4-K window) / `FUN_14091c3e0`
-(36.5-K real); pass 48's `FUN_140945f40` (50.4-K real) / `FUN_14092c130`
-(21.1-K) / `FUN_140949e00` (15.3-K); **pass 49's `FUN_1409527a0` (51.1-K, real
-body, window stamps to `0x14096ea61`), `FUN_14096cb30` (40.9-K camera
-transform window) and `FUN_14096e240` (33.9-K, ratio ≈98, 8-thread spawner)**.
+(e) Window chunks per ledgers 39/47/49/53/57/61/65: the pass-37/38 window-cache set,
+the pass-41 `FUN_14080c740` set, the pass-42 name-window family, pass 45's vote twins,
+pass 46's friends-screen set, pass 47's `FUN_1409006d0` (57.4-K window) / `FUN_14091c3e0`
+(36.5-K real), pass 48's `FUN_140945f40` (50.4-K real) / `FUN_14092c130` (21.1-K) /
+`FUN_140949e00` (15.3-K), pass 49's `FUN_1409527a0` (51.1-K real) / `FUN_14096cb30`
+(40.9-K camera window) / `FUN_14096e240` (33.9-K spawner), **pass 50's
+`FUN_14099c9f0`+`FUN_14099d190`+`FUN_14099d330` (one cascade, ledger 65) /
+`FUN_14098a0d0` (20-K introsort window) / `FUN_1409a9e30` (35.1-K entity-transform
+window) / `FUN_140997970` (view-orthogonalizer window to `0x142069bc4`)**.
 
 ## Cross-cutting conventions (one line each; per-pass deltas in the records)
 
@@ -231,48 +216,53 @@ transform window) and `FUN_14096e240` (33.9-K, ratio ≈98, 8-thread spawner)**.
 | **JSON DOM + writers (43)** | node ctors/readers fully mapped consumer-side: `FUN_141940c00/ea0/e00` + `141940ef0` property set + `141941360/141941440` array + `14193e0d0/93e940/93ef80/93f510/93f560/93e5c0` readers + `FUN_140693130/1406935f0/1406934c0` writers + `func_0x00014213ee60` compact writer (0x14213f7df siblings) + posters `FUN_140840db0/140840e90` + pools `DAT_144137230/250` | `0x14084f530` |
 | **UI screen tier (43–48)** | ctor = base + vtable + `0xa88000000000xxx` guid; node mint `__RegisterWaitForSingleObject(list,type,0)`/`FUN_140726800`; widget chain `FUN_1422544f0`→`1421f1780/1610`→`142255180/330`→`1421ee370/7d0`→`FUN_14224eec0/14224f390`; **reconcile template** = child-list match by node type + row key (`0x41cb` int or string `0x621f`), stale retire `FUN_1405651e0`; sorts + locale pair + introsort ×2 (46); hash-set `(x*0x40000+~x)*0x15*0x41` (46); scoreboard `0x9b<field>` ids, map GUID `|0x2e…`/`|0xb3…`/`|0x1f6…`/pack form (47), handle `(h&~0x3f)` decode; LRU group cache, 5-state async loader, slot registry `DAT_1441b8130`; **(47) settings def belt (resolver ×58, typed setters `0x203/0x201/0x8a8/0x204`, fields `0x6896/0x6161/0x4de8/0x540a`); party dispatcher `FUN_14091a4c0` (steamid arm); widget-interest registrar `FUN_14213f870`; four per-row RB-trees; **(48) carousel roll `(idx+first)%count` `FUN_140941d80`; roster shuffle via TLS RNG `FUN_140939030`; 6-name lobby set `PTR_s_Overview_143050fd0`; settings enum decode belt `0x18/0x66/0x98/0xe5/0xf9/0x9a/0x1df/0x134/0x228` over `0xc8800000000 0xxx`; store-gate `0x1439aeff0`-chain `+0xb2485ad1cf871d2c` ×3 gates** | `0x140849a10` |
 | **Settings backend / JS bridge (49)** | video settings four-generation state `FUN_140958580` + enum belt (0x191/0x1b9/0x1f0/0x1f2/0x22b) + apply/read masters `FUN_14095bd80/14095cee0`; **web view**: 16-method JS registry (plaintext names) + FNV-1a 64 dispatch `FUN_140969640` + modal router `FUN_140968b80` + hash-D method store `FUN_142693a50`; **camera**: entity chain `(DAT_14384879b^x)+0xb3a098e02bc0db2a^0x2bb16a93aa826dcc→(>>0x11|<<0x2f)+0x6494b1884caf70ee^*(_DAT_143b79598+0x97)`, cvar chain `…^DAT_1438489d0)+0xf841a90ed52dbd7d`, XOR-float table `0x143a1a9f0–0x143a1aa3c`, 8-thread pool `FUN_14096e240`; VO filter `FUN_140971780` + hash-C line table `FUN_140973b40` + fifth-family audio table `FUN_140971460`; streaming canary/chunk engine `FUN_14097a660/97ab40/97b830`; store-gate chain now **six gates** (`0x1439aef08/28/50/88`, `0x1439aeff0`, `0x1439af028`) | `0x14094f840` |
+| **Store/loadout tier (50)** | DOM resolver template `(DOM+8 → vt+0x20)(app,event,&out)` + typed `FUN_14193f510/ef80/e5c0/e940/e8e0` + pool disposal 5/0xb→`DAT_144137230`, 0xc/0xd→`250`; **`StoreSystem_C`** states `+0x98 {0,0xd,9}` / `+0x108 {0,4}` via `vt+8(state,"Name")`, product resolve `FUN_1407caee0(store,id)` behind `func_0x000142d3afd0()`, clock `FUN_1409957f0` (seconds, deadlines ×1000), hash-D bundle tables +0x488/0x490, purchase post `0xe0871b`; **loadout engine**: `DAT_143b8d290` svc + `DAT_143872788` .rdata template, 0x158 view / 0x118 weapon rows / 0x78 inventory / 0xb0 request rows, 16-subtype async family over 3 queue slots, request counter `_DAT_143ba4480`, highlight format magic `0x56c6870` ('hlp' read) with branch `func_0x000141c6b880()` / build `_DAT_144159380` / account gates + seeded hash `FUN_1409a29e0(DAT_143059ad8)`, rate limiter hash-set `(x*0x40000+~x)*0x15*0x41`; second XOR-float table `_DAT_143a1aa10-aa3c`; render svc `func_0x000140c857c0` (+0x3748 name map, +0x3948 flag) | `0x14097f810` |
 
 ## Open threads (cheapest next query each; check/update every pass)
 
 2/5. **Entity transport framing + command ids** — base `0x48/0x53/0x7c/0x7d/0xa5/0xb2/0x3a`; grown 32–43 (audio 0x8d, ability 0x6b/0x655/0xf5/0x580/0x1e; queue 0x631b/0x6334, hero 0x664e/0x66b7/0x6521, claim 0x12e58–0x13223). `FUN_141c295b0`/`FUN_141c58170`/`FUN_142d2cf30` bodies unread (~chunk `15xx`).
 11–19. Channel-list renderer unfound; hotfix dump `_DAT_1439d98c0`; **gaps** —
 T42-1 8,015 B, T43-1 1,601 B, T47-1 1,080 B open; event-name table `0x143851c90`
-still encoded; pass-32–34 machinery bodies; handle-table writers; `FUN_14099xxxx`
-store API (to 49); 'Unknown' belt `0x14385d1a0`–`ddf0`.
+still encoded; pass-32–34 machinery bodies; handle-table writers; 'Unknown' belt `0x14385d1a0`–`ddf0`.
 21–25. Store endpoint labels (`0x1438595b0–0x1438597c8`); `FUN_140d1xxxx` sound
 (`crossref.py 140d1bcc0`); audio-channel ids; `0x8784b4333a5802xx` masked chain;
 component-message ids (`0xd8…`/`0x5800…`/`0xde…`/`0x46…` families).
 26–40. Widget names / UI-cache tables / render tier bodies (lifecycle closed 40);
 material family (`crossref.py 142cb4c20`); `FUN_140c6xxxx` input; `FUN_1409bxxxx`
-appliers; `0x142f2df90` fn-ptr table / `FUN_1407b0e90` stat fold / toast table
-`0x143059b80` / far-window regions `0x14213f7df`/`0x142045667`/`0x141c4b29c`.
+appliers; `0x142f2df90` fn-ptr table / `FUN_1407b0e90` stat fold / **toast table
+`0x143059b80` = the notification string table `FUN_1409a4fc0` reads (50)** /
+far-window regions `0x14213f7df`/`0x142045667`/`0x141c4b29c`.
 41–55. T40/T41 — serializer (`crossref.py 1407f2a00`) + twin (`142388ab0`);
 time/random `FUN_141d11f60/141c4efa0`; observer blocks `0x143b90c30–ea8`; c740
 window boundary; `FUN_142044820` banks; factory update bodies.
 56–69. T42-x/T43 — 8,015-B hole; list-API defs `0x1421e0000+`; name-window boundary;
 map/mode enum table (`142d37920`); player-array writers; `0x141bba761` region;
-T43-1 the 1,601-B hole (`--offcuts` when neighbours gain mentions); T43-4
-fn-ptrs; T43-5 regex side; T43-6 locale; T43-7 sentinel 0x13e.
+T43-1 hole (`--offcuts` when neighbours gain mentions); T43-4 fn-ptrs;
+T43-5 regex side; T43-6 locale; T43-7 sentinel 0x13e.
 71–84. T44-3…8 / T45-1…6 — ability-config (`140d56bf0`); hero-info state
 (`140a63a00`); `0xca…` RTTI (`142d402d0`); `FUN_142d26xxx/142d29xxx` writers;
 hashes `142697480`/`142159220`; vote twin slots (`1408cb4e0`); `0x7f2` enum
 writers; `_DAT_143b975a0` singleton; award-pool siblings (`142149490`);
 `0x129b0`/`+0x251` flush; `0x18317a531d116c` bucket table.
 85–91. T46-x minus T46-2 — the `0x1408e0be0→0x1408e1260` hole (1,527 B); fifth
-hash family builder (`1408f4fb0`); `DAT_1441b8130` slot registry; 13-entry hero
+hash family builder (`1408f4fb0`); `DAT_1441b8130` slot registry (consumer seen 50); 13-entry hero
 table (`14304c240`); `vt+0x238` tags; `FUN_1408f6d50` 5-state machine.
 92–103. T47-x/T48-x — the `0x1409054a0→0x1409058e0` hole (1,080 B, ledger 63);
 `FUN_1409006d0` window boundary; endorsement cascade join (`140917b70`);
 steamid service def (`1422ec0e0`); the `0x1409487d0→0x140949130` hole (1,052 B)
 + settings-master midsection giant (T48-1); enum-ladder member tables (same
 family as 49's 0x191/0x1b9/0x1f0/0x1f2/0x22b decoders; `crossref.py 141b328f0`);
-store-gate defining region (six gates now, `crossref.py 140996880`); 6-name row
+store-gate defining region (**store side now read, 50**; `crossref.py 140996880`); 6-name row
 set's other names; `FUN_140941bf0` callers.
-104–109. T49-1…6 — the `0x14099xxxx` store-API bodies (`crossref.py 140993710`);
-camera workers' far region `0x140983fa2/0x140986598` (`crossref.py 14096e740`);
-JS-bridge web-side writers (`crossref.py 140965ae0`); XOR-float table
-`0x143a1a9f0–0x143a1aa3c`; canary checksum gates (`crossref.py 143054e4c`);
-carried T48-4/T48-5/T47-x/T42-1/T43-1/T46-1/T45-1/T46-3/T46-5/T43-7.
+110–118. T50-x minus closed — the 1,757-B hole `0x14098e520→0x14098ec80` (T50-1,
+`--offcuts` when neighbours gain mentions); render-math family `0x142069a20-0x142069bc4`
+(chunk 1516) + 0x1420d0xxx render-object bodies (`crossref.py 1420d0e80`); render-svc
+defining region `0x140c7xxxx/0x140c8xxxx` (`crossref.py 140c857c0`); second XOR-float
+table `_DAT_143a1aa10-aa3c`; highlight CDN host `func_0x000141bbbd70`; canary checksum
+gates (`crossref.py 143054e4c`); carried: camera workers' far region `0x140983fa2/
+0x140986598` (T49-2), JS-bridge web-side writers (T49-3), T48-4/T48-5/T47-x/T42-1/
+T43-1/T46-1/T45-1/T46-3/T46-5/T43-7. **Closed in 50: T49-1 + T49-4** (store API read;
+XOR-float table = weapon/camera tier constant).
 
 CLOSED (machine): fd9670 recount; provenance; `0x1411b8070`; thread 43; T20; JSON
 writer/parser/CSV; XOR-8 salt keys; presence events; closed ledgers in the archive.
@@ -280,19 +270,23 @@ Closings by pass: 36→T35-1/3; 37→T36-3; 38→T37-4; 39→T38-1; 40→render 
 41→T23 audio + belt; 42→T9 flags + voice client + field-id set; 43→T42-2 + row
 model + page table/regexes/JSON DOM; 44→T43-3/T43-8 + zero-gap; 45→T44-5;
 46→T44-6; 47→T44-1 + T44-2 def belts + T46-2 ground; 48→T47-6 + T44-2 party-row
-belt + T47-3 award-side; **49→none (tier opened, not closed)**.
+belt + T47-3 award-side; 49→none (tier opened, not closed); **50→T49-1 +
+T49-4 (store API read; XOR-float table = weapon/camera tier constant)**.
 
 ## Next pass
 
 Resume range: **`NEXT.txt`** — written by `pass_next.py` from `state.json` + `--max`;
-regenerate after every `--update`, never hand-edit. Pass 49 ends at `FUN_14097f6b0`
-(the unlock-refresh walker); stratum `0x14054fea0` OPEN; next = chunks `0453`–`0464`,
-`.text` `0x14097f810`–`0x1409b9e00` (12 chunks, 1,503,772 B post-strip). Watch for:
-(a) **the `FUN_14099xxxx` store-API bodies** (T49-1, six consumer families read);
-(b) the camera workers' far region `0x140983fa2`/`0x140986598` (T49-2) and the
-`0x1409bxxxx` appliers; (c) the `0x140a98xxx`/`0x140a99xxx` group-service ground
-(still ahead); (d) the steamid service def (T47-5, `crossref.py 1422ec0e0`) and
-far-window stamps at `0x1421e4563` (ledger 47/53). Do not re-run a counted range
+regenerate after every `--update`, never hand-edit. Pass 50 ends at the loadout-apply
+tick `FUN_1409ab600`; stratum `0x14054fea0` OPEN; next = chunks `0461`–`0475`,
+`.text` `0x1409ab8e0`–`0x1409df470` (15 chunks, 1,449,337 B post-strip). Watch for:
+(a) **the 0x1420d0xxx render-object bodies and the render-math family
+`0x142069a20-0x142069bc4`** (T50-2; `crossref.py 1420d0e80` — chunk 1516);
+(b) the render-svc defining region `0x140c7xxxx/0x140c8xxxx` (T50-3) and the
+`0x140a1xxxx`/`0x140a3xxxx` render-object owner tier; (c) the
+`0x140a98xxx`/`0x140a99xxx` group-service ground (still ahead) and the steamid
+service def (T47-5, `crossref.py 1422ec0e0`); (d) the T50-1 hole
+`0x14098e520→0x14098ec80` (`--offcuts` sweep) and far-window stamps at
+`0x1421e4563` (ledger 47/53). Do not re-run a counted range
 through `--update` (ledger 5); never treat `0x826e…`/`0xca334801`/`0x4343ffa4`-
 family or offcut-call addresses as data (ledger 20); ledgers 24/31/39/43/44/47/
 49/53/57/58/60/61/62/63 for gaps, windows, twins and the hash families; `size=`
