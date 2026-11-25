@@ -23,6 +23,9 @@ evidence. They have no line budget because they are not part of the pass loop.
 5. [`provider-belt.md`](provider-belt.md) — the HUD/UI data-provider belt
    (`0x140ac1e70`–`0x140b478f0`, passes 60–63): the ~560-provider binding layer, its
    services and emit masters, the refresh cascade, and the overhead-UI row engine.
+6. [`recorder-tier.md`](recorder-tier.md) — the killcam/highlight video recorder
+   control tier (`0x140b47d80`+, pass 64): create/poll/finalize, the job wrapper, the
+   playlist arms, and the playback hook; the encoder device band is the open tail.
 
 ## Evidence and confidence
 
@@ -42,8 +45,9 @@ These pages were generated after pass 43, which ends at `0x140874660` in chunk `
 (chunks `0000`–`0402` inclusive — 403 chunk indices, `0000`–`013` of them read as
 passes 1–2 pre-protocol — 23,415 functions, 6,486,312 B of declared `size=`, or 15.13 % of
 `.text`); [`provider-belt.md`](provider-belt.md) was added at pass 63, which ends at
-`0x140b478f0` in chunk `0579` (30,327 functions, 25.32 %). The engine-runtime stratum
-is still open; the registry machine is closed.
+`0x140b478f0` in chunk `0579` (30,327 functions, 25.32 %); [`recorder-tier.md`](recorder-tier.md)
+was added at pass 64, which ends at `0x140b7aa80` in chunk `0587` (31,024 functions,
+25.91 %). The engine-runtime stratum is still open; the registry machine is closed.
 
 ## When these pages are updated
 
