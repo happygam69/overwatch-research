@@ -50,6 +50,17 @@ function that mentions the symbol with its chunk and hit count, and the compact 
 a short bare hex run (`143b94`) matches as a prefix, so a band is one query. This is the
 "grep forward for X" open-thread query (threads 2, 9, 11, 17); `pass_measure.py` runs it for
 the range max of every pass (`max refs:`). Read-only.
+`scripts/dumpva.py <addr> [n]` → raw image bytes at a VA: qwords with `.text`/string
+resolution, or `--bytes` for a hex dump. The data-table half of a thread query (row stride,
+fields, pointer vs code).
+`scripts/fnread.py <addr>` → one corpus body by entry address: header (`size=`, callers,
+lines/bytes) + body, `--stats` for the header only, `--stamps` for its address lines. The
+body half of a thread query; a missing file means no decompiled body for that entry.
+`scripts/pdata_gaps.py <gap_start> <gap_end>` (or `--range LO HI`) → re-checks a >1 KiB
+gap against the image: gap-byte composition (int3/nop/zero), `.pdata` unwind records that
+cover it, and whether the gap is a body tail/funclet of a function already read or a
+stub table. `gap_report.py` says "hole" from corpus text alone; this says whether the
+bytes are actually missing code. Ledger 75.
 
 (Not to be confused with `../flood.py` — the byte-budget corpus streamer with
 `../flood_cursor.txt`, a separate mechanism.)
