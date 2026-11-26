@@ -31,6 +31,11 @@ evidence. They have no line budget because they are not part of the pass loop.
    machine, the per-state timeout table, the web session (headers, cookie, JSON DOM,
    nine parsers), the 8-request HTTP cap, and the LogonComplete error ladder; plus the
    client view/render belt that sits in front of it.
+8. [`entity-view-runtime.md`](entity-view-runtime.md) — the entity-view tier
+   (`0x140c7e540`–`0x140cc20c0`, passes 72–74): the 0x1b70-byte per-entity view
+   object, the bit-exact 0x124-B record schema with its width ladders, the 13-slot ×
+   6-op modifier machine, the pose rings and interpolator, and the two-sided entity
+   fingerprint checksum.
 
 ## Evidence and confidence
 
@@ -52,7 +57,9 @@ passes 1–2 pre-protocol — 23,415 functions, 6,486,312 B of declared `size=`,
 `.text`); [`provider-belt.md`](provider-belt.md) was added at pass 63, which ends at
 `0x140b478f0` in chunk `0579` (30,327 functions, 25.32 %); [`recorder-tier.md`](recorder-tier.md)
 was added at pass 64, which ends at `0x140b7aa80` in chunk `0587` (31,024 functions,
-25.91 %). The engine-runtime stratum is still open; the registry machine is closed.
+25.91 %). [`entity-view-runtime.md`](entity-view-runtime.md) was added at pass 74, which
+ends at `0x140cc20c0` in chunk `0667` (33,838 functions, 28.25 %). The engine-runtime
+stratum is still open; the registry machine is closed.
 
 ## When these pages are updated
 
