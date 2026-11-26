@@ -26,6 +26,11 @@ evidence. They have no line budget because they are not part of the pass loop.
 6. [`recorder-tier.md`](recorder-tier.md) — the killcam/highlight video recorder
    control tier (`0x140b47d80`+, pass 64): create/poll/finalize, the job wrapper, the
    playlist arms, and the playback hook; the encoder device band is the open tail.
+7. [`auth-tier.md`](auth-tier.md) — the Battle.net authentication tower
+   (`0x140bc86f0`–`0x140bda720`, pass 67): one 0x768-byte object with a **33-state**
+   machine, the per-state timeout table, the web session (headers, cookie, JSON DOM,
+   nine parsers), the 8-request HTTP cap, and the LogonComplete error ladder; plus the
+   client view/render belt that sits in front of it.
 
 ## Evidence and confidence
 
