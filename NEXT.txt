@@ -1,10 +1,10 @@
 # scripts/pass_next.py output - generated, rerun after pass_measure --update; do not edit
 == next pass ==
-chunks  0694..0705 (12)  chunks/chunk_0694.txt .. chunks/chunk_0705.txt
-bytes   1,508,625 post-strip (max 1,500 KiB = 1,536,000 B; +27,375 B headroom; chunk_0706 (+137,383 B) would cross)
-text    0x140d17280-0x140d4d7d0
-measure python scripts/pass_measure.py 694 705
-gaps    python scripts/gap_report.py 694 705
-record  ranges/0x140d17280-0x140d4d7d0.md
-next    state.json.next_chunk becomes 706 after --update
-note    start 694 agrees with state.json.next_chunk
+chunks  0703..0715 (13)  chunks/chunk_0703.txt .. chunks/chunk_0715.txt
+bytes   1,470,423 post-strip (max 1,500 KiB = 1,536,000 B; +65,577 B headroom; chunk_0716 (+146,965 B) would cross)
+text    0x140d3dfa0-0x140d70d60
+measure python scripts/pass_measure.py 703 715
+gaps    python scripts/gap_report.py 703 715
+record  ranges/0x140d3dfa0-0x140d70d60.md
+next    state.json.next_chunk becomes 716 after --update
+note    start 703 agrees with state.json.next_chunk
