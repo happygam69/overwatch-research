@@ -5,10 +5,29 @@ leave one detailed record per pass. Nothing skipped, nothing sampled.
 
 ## Source
 
-All paths below are relative to this repo root (the chunk corpus, `index.json`,
-`state.json`); the decompiler output and build tools sit two levels up. One exception:
-the decoded string pool is copied in as `strpool.tsv`, so `scripts/strlookup.py` and
-`scripts/strscan.py` need nothing outside this folder (ledger 29).
+Everything a pass needs is in this repo: `chunks/` (the corpus), `index.json`, `state.json`,
+`strpool.tsv` (the decoded string pool, ledger 29), `rdata_names.tsv`, and `image/` (the
+image bytes records quote — below). The decompiler output (`corpus/b5120..b5167`, 119,757
+`.c` files) and `tools/flood_build.py` that repacked them into `chunks/chunk_NNNN.txt` are
+provenance only: no script here reads them.
+
+`image/` — the client image (`Overwatch_clean.exe`, 65 MB) is **not** in this repo.
+`pe.json` pins its identity — size 65,682,640 B, sha256 `e02f89fd1df5512b…63e5037`, and
+section table — and that identity is the **clean/unpacked** image, the one the corpus was
+decompiled from. The retail `Overwatch.exe` (`e4472f75a11f035c…32e49cd5`) is byte-identical
+everywhere except `.text`, which is encrypted there (**0** bytes differ outside `.text`'s
+raw range; `.text` reads 7.98 bits/byte instead of code) — so the retail exe can be
+passed as `OW_IMAGE` for data-section reads only. `img.py` enforces that: `.text` reads
+from the retail exe return nothing with a one-line warning, and any third build is
+refused outright rather than silently mixed in. `slices.bin`/`slices.json` hold zlib slices of the bytes records quote —
+the whole `.pdata` table plus a window at every data-section VA any record or doc
+mentions (1.2 MB for 1,036 slices). `scripts/img.py` is the only reader: the image when
+reachable (`OW_IMAGE`, default `E:\Overwatch\_retail_\Overwatch_clean.exe`), else the
+slices, so `dumpva.py`/`pdata_gaps.py` work on a bare clone. Where the image is reachable,
+`python scripts/img.py export --cited ranges/<record>.md` adds a pass's new windows
+(`--pdata` re-exports the unwind table, `selftest` proves the store reads without the
+image). `.text` bytes are deliberately not stored: they are the decompiled corpus, and
+`pdata_gaps.py`'s byte-composition columns say so when the gap bytes are absent.
 
 `../../corpus/b5120..b5167` — 119,757 Ghidra `.c` files, one per function, named by entry
 address. `../../tools/flood_build.py` repacks them into `chunks/chunk_NNNN.txt`:
@@ -52,7 +71,13 @@ a short bare hex run (`143b94`) matches as a prefix, so a band is one query. Thi
 the range max of every pass (`max refs:`). Read-only.
 `scripts/dumpva.py <addr> [n]` → raw image bytes at a VA: qwords with `.text`/string
 resolution, or `--bytes` for a hex dump. The data-table half of a thread query (row stride,
-fields, pointer vs code).
+fields, pointer vs code). Reads `image/` when the image is not reachable; an absent range
+prints the `img.py export` command that would add it.
+`scripts/pdata_gaps.py <gap_start> <gap_end>` (or `--range LO HI`) → re-checks a >1 KiB
+gap against the image: gap-byte composition (int3/nop/zero), `.pdata` unwind records that
+cover it, and whether the gap is a body tail/funclet of a function already read or a
+stub table. `gap_report.py` says "hole" from corpus text alone; this says whether the
+bytes are actually missing code. Ledger 75.
 `scripts/fnread.py <addr>` → one corpus body by entry address: header (`size=`, callers,
 lines/bytes) + body, `--stats` for the header only, `--stamps` for its address lines. The
 body half of a thread query; a missing file means no decompiled body for that entry.
@@ -91,7 +116,10 @@ the script, not a remembered chunk count. You have a
    in the record's headline-numbers section, or cite its `--json` digest
    (`measure digest <16 hex>`) plus fields quoted from the same `--json` run; do not retype
    its numbers.
-4. Run `python scripts/pass_measure.py <first> <last> --update` to merge the pass into
+4. If the pass ran where the image is reachable,
+   `python scripts/img.py export --cited ranges/<record>.md` so every byte the record
+   quotes stays readable from the repo alone.
+5. Run `python scripts/pass_measure.py <first> <last> --update` to merge the pass into
    `state.json`, then update `CODE_MAP.md`: coverage row, corrections/synthesis only if
    something structural changed, open threads, next-pass watch items. The resume range is
    `NEXT.txt`: regenerate it with `python scripts/pass_next.py` after `--update`, never

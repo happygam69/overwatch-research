@@ -9,29 +9,17 @@ usage (from work/flood/):
 
 Each row: address, raw hex, u64, then a resolution -- `FUN_<addr>` for .text,
 `"text"` for a NUL-terminated printable string in the same section, else nothing.
-Read-only, no paths outside this repository except the shipped image.
+Bytes come from `scripts/img.py`: the client image when reachable (`OW_IMAGE`), else
+the committed `image/` slices. A range in neither prints the `img.py export` command
+that would add it. Read-only, standard library only.
 """
 import argparse
 import os
 import struct
 import sys
 
-IMAGE = r"E:\Overwatch\_retail_\Overwatch_clean.exe"
-
-
-def sections(data):
-    pe = struct.unpack_from("<I", data, 0x3C)[0]
-    nsec = struct.unpack_from("<H", data, pe + 6)[0]
-    optsz = struct.unpack_from("<H", data, pe + 20)[0]
-    magic = struct.unpack_from("<H", data, pe + 24)[0]
-    base = struct.unpack_from("<Q" if magic == 0x20B else "<I", data,
-                              pe + 24 + (0x18 if magic == 0x20B else 0x1C))[0]
-    off = pe + 24 + optsz
-    for _ in range(nsec):
-        name = data[off:off + 8].rstrip(b"\0").decode("ascii", "replace")
-        vsz, va, rsz, raw = struct.unpack_from("<IIII", data, off + 8)
-        yield name, base + va, min(vsz or rsz, rsz), raw, rsz
-        off += 40
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import img  # noqa: E402
 
 
 def main(argv=None):
@@ -44,49 +32,18 @@ def main(argv=None):
     a = ap.parse_args(argv)
     if a.qwords is not None:
         a.count = a.qwords
-    with open(IMAGE, "rb") as fh:
-        data = fh.read()
-    secs = list(sections(data))
-
-    def sec_of(va):
-        for name, sva, size, raw, rsz in secs:
-            if sva <= va < sva + max(size, rsz):
-                return name, sva, size, raw
-        return None
-
-    def off_of(va):
-        s = sec_of(va)
-        if s is None:
-            return None
-        name, sva, size, raw = s
-        if va - sva >= size:
-            return None
-        return raw + (va - sva)
-
-    def cstr(va, limit=96):
-        o = off_of(va)
-        if o is None:
-            return None
-        end = data.find(b"\0", o, o + limit)
-        if end < 0:
-            return None
-        raw = data[o:end]
-        if raw and all(9 <= b <= 0x7E for b in raw):
-            return raw.decode("ascii")
-        return None
-
     try:
         va = int(a.addr, 16)
     except ValueError:
         print("address must be hex", file=sys.stderr)
         return 1
-    o = off_of(va)
-    if o is None:
-        print("0x%x is not file-backed" % va, file=sys.stderr)
+    if img.read(va, 1) is None:
+        print("0x%x is not file-backed (or not in image/) -- python scripts/img.py export 0x%x 16"
+              % (va, va), file=sys.stderr)
         return 1
 
     if a.bytes:
-        blob = data[o:o + a.count]
+        blob = img.read(va, a.count) or b""
         for i in range(0, len(blob), 16):
             chunk = blob[i:i + 16]
             print("0x%x  %-47s  %s" % (va + i, chunk.hex(" "),
@@ -96,19 +53,20 @@ def main(argv=None):
     ten = prog = 0
     for i in range(a.count):
         qva = va + i * 8
-        qo = off_of(qva)
-        if qo is None or qo + 8 > len(data):
+        raw = img.read(qva, 8)
+        if raw is None:
+            print("0x%x  (absent)  -- python scripts/img.py export 0x%x %d" % (qva, qva, 8 * a.count))
             break
-        q = struct.unpack_from("<Q", data, qo)[0]
+        q = struct.unpack("<Q", raw)[0]
         note = ""
-        s = sec_of(q)
+        s = img.section_at(q)
         if s is not None:
             name = s[0]
             if name == ".text":
                 note = "-> FUN_%x" % q
                 prog += 1
             else:
-                t = cstr(q)
+                t = img.cstring(q)
                 if t is not None:
                     note = '"%s"' % t[:64]
                 elif name in (".data", ".rdata"):

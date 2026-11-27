@@ -9,49 +9,38 @@ Row shape matches strpool.tsv, so the shipped lookup works:
 usage:
     python scripts/rdata_names.py [image] [-o rdata_names.tsv]
 
+The default image is `OW_IMAGE` or the path in `scripts/img.py`; this regenerates the
+shipped table, so it needs the whole `.rdata` and cannot run from the `image/` slices.
 Read-only, standard library only.
 """
 import argparse
 import os
 import re
-import struct
 import sys
 
-DEFAULT_IMAGE = r"E:\Overwatch\_retail_\Overwatch_clean.exe"
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import img  # noqa: E402
+
 DEFAULT_OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "rdata_names.tsv")
-
-
-def pe_sections(data):
-    """(name, va, virtual_size, raw_ptr) for each section; PE32/PE32+."""
-    pe = struct.unpack_from("<I", data, 0x3C)[0]
-    nsec = struct.unpack_from("<H", data, pe + 6)[0]
-    optsz = struct.unpack_from("<H", data, pe + 20)[0]
-    magic = struct.unpack_from("<H", data, pe + 24)[0]
-    image_base = struct.unpack_from("<Q" if magic == 0x20B else "<I",
-                                    data, pe + 24 + (0x18 if magic == 0x20B else 0x1C))[0]
-    off = pe + 24 + optsz
-    for _ in range(nsec):
-        name = data[off:off + 8].rstrip(b"\0").decode("ascii", "replace")
-        vsize, va, rawsize, rawptr = struct.unpack_from("<IIII", data, off + 8)
-        yield name, image_base + va, min(vsize or rawsize, rawsize), rawptr
-        off += 40
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("image", nargs="?", default=DEFAULT_IMAGE)
+    ap.add_argument("image", nargs="?", default=None,
+                    help="default: OW_IMAGE or %s" % img.IMAGE)
     ap.add_argument("-o", "--out", default=DEFAULT_OUT)
     a = ap.parse_args(argv)
 
-    with open(a.image, "rb") as fh:
-        data = fh.read()
-    section = next((s for s in pe_sections(data) if s[0] == ".rdata"), None)
-    if section is None:
-        print("no .rdata section in %s" % a.image, file=sys.stderr)
+    if a.image:
+        img.IMAGE = a.image
+    s = img.section(".rdata")
+    blob = img.read(s[0], s[2]) if s else None
+    if blob is None:
+        print("no .rdata bytes -- set OW_IMAGE (or pass the image path); this command "
+              "regenerates the shipped table and needs the whole section", file=sys.stderr)
         return 1
-    _, va, size, raw = section
-    blob = data[raw:raw + size]
+    va = s[0]
 
     rows = []
     for m in re.finditer(rb"[\x09\x0a\x0d\x20-\x7e]{4,}\x00", blob):

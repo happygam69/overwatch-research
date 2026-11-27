@@ -19,7 +19,9 @@ function/fragment), then prints one verdict per >1 KiB gap:
   stub table                >=8 `ret` in 512 B + int3 padding: generated thunks
 
 So "hole" totals are re-checked against the binary instead of assumed. Read-only,
-standard library only; the image path is the one `rdata_names.py` already uses.
+standard library only; bytes come from `scripts/img.py` -- the image when it is
+reachable (`OW_IMAGE`), else the committed `image/` slices (`.pdata` ships whole, so
+the pdata verdicts always run; the byte-composition columns need gap bytes in the store).
 """
 import argparse
 import os
@@ -27,27 +29,23 @@ import re
 import struct
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import img  # noqa: E402
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 CHUNKS = os.path.join(HERE, "..", "chunks")
-IMAGE = r"E:\Overwatch\_retail_\Overwatch_clean.exe"
 HDR = re.compile(r"^// ([0-9a-f]{9,16}) \S+ size=(0x[0-9a-f]+|\d+)", re.M)
 
 
-def sections(data):
-    pe = struct.unpack_from("<I", data, 0x3C)[0]
-    nsec = struct.unpack_from("<H", data, pe + 6)[0]
-    optsz = struct.unpack_from("<H", data, pe + 20)[0]
-    magic = struct.unpack_from("<H", data, pe + 24)[0]
-    base = struct.unpack_from("<Q" if magic == 0x20B else "<I", data,
-                              pe + 24 + (0x18 if magic == 0x20B else 0x1C))[0]
-    off = pe + 24 + optsz
-    out = {}
-    for _ in range(nsec):
-        name = data[off:off + 8].rstrip(b"\0").decode("ascii", "replace")
-        vsz, va, rsz, raw = struct.unpack_from("<IIII", data, off + 8)
-        out[name] = (base + va, min(vsz or rsz, rsz), raw)
-        off += 40
-    return base, out
+def pdata_table():
+    """[(start, end)] from the .pdata RUNTIME_FUNCTION rows."""
+    pva, _vsz, psz, _raw = img.section(".pdata")
+    blob = img.read(pva, psz)
+    if blob is None:
+        raise SystemExit("no .pdata bytes -- run `python scripts/img.py export --pdata` "
+                         "where the image is, or set OW_IMAGE")
+    base = img.pe()["base"]
+    return [(base + b, base + e) for b, e, _u in struct.iter_unpack("<III", blob)]
 
 
 def entries(lo, hi):
@@ -69,15 +67,8 @@ def main(argv=None):
     ap.add_argument("pair", nargs="*", metavar="ADDR")
     ap.add_argument("--range", nargs=2, metavar=("LO", "HI"))
     a = ap.parse_args(argv)
-    with open(IMAGE, "rb") as fh:
-        data = fh.read()
-    base, sec = sections(data)
-    tva, tsz, traw = sec[".text"]
-    pva, psz, praw = sec[".pdata"]
-    pdata = []
-    for i in range(psz // 12):
-        b, e, _u = struct.unpack_from("<III", data, praw + i * 12)
-        pdata.append((base + b, base + e))
+    tva, tsz = img.section(".text")[:2]
+    pdata = pdata_table()
 
     if a.range:
         lo, hi = (int(x, 16) for x in a.range)
@@ -92,16 +83,20 @@ def main(argv=None):
     for start, end in pairs:
         if end - start <= 1024 or start < tva or end > tva + tsz:
             continue
-        blob = data[traw + start - tva:traw + end - tva]
-        int3 = blob.count(0xCC)
-        nop = blob.count(0x90)
-        zero = blob.count(0x00)
+        blob = img.read(start, end - start)
         cover = [(b, e) for b, e in pdata if b < end and e > start]
         ahead = [(b, e) for b, e in cover if b <= start]
         inside = [(b, e) for b, e in cover if start < b < end]
-        print("gap 0x%x-0x%x  %d B | int3 %d%% nop %d%% zero %d%% | .pdata %d"
-              % (start, end, end - start, 100 * int3 // len(blob),
-                 100 * nop // len(blob), 100 * zero // len(blob), len(cover)))
+        if blob is None:
+            print("gap 0x%x-0x%x  %d B | text bytes not in image/ | .pdata %d"
+                  % (start, end, end - start, len(cover)))
+        else:
+            int3 = blob.count(0xCC)
+            nop = blob.count(0x90)
+            zero = blob.count(0x00)
+            print("gap 0x%x-0x%x  %d B | int3 %d%% nop %d%% zero %d%% | .pdata %d"
+                  % (start, end, end - start, 100 * int3 // len(blob),
+                     100 * nop // len(blob), 100 * zero // len(blob), len(cover)))
         for b, e in ahead:
             print("   inside pdata span FUN_%x (%x-%x, %d B)" % (b, b, e, e - b))
         if inside:
@@ -109,7 +104,7 @@ def main(argv=None):
                   % (len(inside), ", ".join("0x%x/%dB" % (b, e - b) for b, e in inside)))
         if not cover:
             print("   no pdata (leaf/no-unwind code)")
-        if blob[:512].count(0xC3) >= 8 and int3:
+        if blob is not None and blob[:512].count(0xC3) >= 8 and int3:
             print("   stub table (>=8 ret in 512 B + int3 padding)")
         shown += 1
     print("-- %d gap(s) over 1 KiB" % shown)
