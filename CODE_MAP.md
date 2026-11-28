@@ -10,7 +10,7 @@
 | `scripts/gap_report.py` | per-range gap classes (`giant`/`offcut`/`hole`; `--offcuts` = corpus sweep) + `window reach:` far-window watch list (ledger 53) |
 | `scripts/dumpva.py` / `scripts/fnread.py` / `scripts/pdata_gaps.py` | raw VA dump (qwords + pointer/string resolution) / one corpus body by address / gap-vs-`.pdata` verdict — the thread-closure queries; all three read through `img.py` |
 | `image/` + `scripts/img.py` | the image bytes records quote (`pe.json` pins the build: size 65,682,640 B, sha256 `e02f89fd…`; `slices.bin` = zlib windows + the whole `.pdata`): the image when reachable (`OW_IMAGE`), else the slices — `stats`/`export`/`selftest`; keeps `dumpva`/`pdata_gaps` working on a bare clone |
-| `rdata_names.tsv`/`scripts/rdata_names.py` | plaintext `.rdata` strings (16,832 rows) / regenerator; query via `strlookup.py --pool rdata_names.tsv` |
+| `rdata_names.tsv`/`scripts/rdata_names.py` + `strings_*.tsv`/`scripts/strindex.py` | plaintext `.rdata` strings (16,832 rows) / regenerator; query via `strlookup.py --pool rdata_names.tsv`; `strindex.py` = corpus-wide string→address→function index (pool + rdata + inline literals; `--find`/`--addr`/`--func`/`--chunk`) |
 | `docs/*.md` | reader-facing findings: plain-prose subsystem pages; no line budget, milestone-only; conclusions cite records |
 ## Coverage 
 Corpus: 2,228 chunks, 119,757 functions, 42,864,695 B `.text`; `state.json` is the truth; pending range is `NEXT.txt`.
