@@ -24,9 +24,9 @@ Corpus: 2,228 chunks, 119,757 functions, 42,864,695 B `.text`; `state.json` is t
 | 69–74 | `0620`–`0667` | `0x140c064c0`–`0x140cc20c0` | 1,590 | `ranges/0x140c064c0-0x140c29f90.md` … `ranges/0x140ca1f80-0x140cc20c0.md` (rows 69–74; the tier's reader account `docs/entity-view-runtime.md`) |
 | 75–80 | `0668`–`0720` | `0x140cc2290`–`0x140d84290` | 1,324 | `ranges/0x140cc2290-0x140cd2be0.md` + `ranges/0x140cd3db0-0x140ced630.md` + `ranges/0x140cef940-0x140d16d70.md` (75–77) + `ranges/0x140d17280-0x140d3dd60.md` + `ranges/0x140d3dfa0-0x140d67540.md` + `ranges/0x140d67af0-0x140d84290.md` (78–80) |
 | 81–84 | `0721`–`0747` | `0x140d844a0`–`0x140de7050` | 522 | `ranges/0x140d844a0-0x140d9c1f0.md` + `ranges/0x140d9c280-0x140dc7700.md` (rows 81–84) + `ranges/0x140dc7ce0-0x140de7050.md` |
-| 85 | `0748`–`0756` | `0x140de7350`–`0x140e0ced0` | 337 | `ranges/0x140de7350-0x140e0ced0.md` |
-| **total** | **757 indices, `0000`–`0756`** | `0x140001000`–`0x140e0ced0` | **36,021** | machine-verified (`state.json`) |
-Machine-verified (`state.json` after pass 85, quoted from the `--update` totals): files 36,021, Σ `size=` 11,528,409; classes reg 7,956 / wrapper 1,954 / builder 1,717 / sorted 280 / atexit 261 / record 326 / other **23,527**; 7,956 registration calls = 7,952 ciphertext + 4 plaintext (7,955 distinct; one plaintext hash ×2 — Corrections 16); `d4f30` 1,188 / `d4f70` 1,350 / `d4fb0` 4,492 / `c2d70` 4,212 / `c2d50` 326 / `c7880` 261 / `atexit` 353; records 326. Passes 27–85 = consumer only.
+| 85–86 | `0748`–`0765` | `0x140de7350`–`0x140e3ce90` | 618 | `ranges/0x140de7350-0x140e0ced0.md` + `ranges/0x140e0dc10-0x140e3ce90.md` |
+| **total** | **766 indices, `0000`–`0765`** | `0x140001000`–`0x140e3ce90` | **36,302** | machine-verified (`state.json`) |
+Machine-verified (`state.json` after pass 86, quoted from the `--update` totals): files 36,302, Σ `size=` 11,670,092; classes reg 7,956 / wrapper 1,954 / builder 1,717 / sorted 280 / atexit 261 / record 326 / other **23,808**; 7,956 registration calls = 7,952 ciphertext + 4 plaintext (7,955 distinct; one plaintext hash ×2 — Corrections 16); `d4f30` 1,188 / `d4f70` 1,350 / `d4fb0` 4,492 / `c2d70` 4,212 / `c2d50` 326 / `c7880` 261 / `atexit` 353; records 326. Passes 27–86 = consumer only.
 
 ## Cross-cutting conventions (one line each; per-pass deltas in the records) 
 | convention | rule | first seen |
@@ -100,23 +100,26 @@ CLOSED (machine): fd9670 recount; provenance; `0x1411b8070`; thread 43; T20; JSO
 **83→T81-1 CLOSED (the @0734–0740 stratum read; @0741–0743 left) + T81-2/T82-1/T82-2/T82-3 CLOSED (the 0x5e0-track writer, the merge/query front door, the `FUN_140dc3870/2db0` pair, the 0x5d0 accumulators) + ledger 101 (weapon/fire service stratum; 0 real holes; 0 XOR-8 — ninth); NEW T83-1..T83-7 (fourth window, namer set, taper rows, tag triples, `FUN_14202af10`/`FUN_140db0870` pair, `DAT_143c0a0c0` RTTI, `_DAT_14311e0c0..e0cc` rows).**
 **84→T83-1 CLOSED (the angular-range differ/merge construct is a 4+-emission cascade: `FUN_140dc9900`'s interior + `FUN_140dcbd00` + `FUN_140dced20`, the 0x48-B row engine) + T83-2 CLOSED (the `0x140dd39e0/4060/75c0/7c50/52d0` probe-set quintet read) + T81-1 CLOSED fully (the @0741–0743 stratum read; the arena-update parents named) + T83-5 half (the first `FUN_14202af10` + `LAB_140db0850/0860` consumers sighted; `FUN_140db0870` stays far) + ledger 102 (the entity-arena/inspect tier: the angular-range engine, the sight-line chain, the arena-update parent variants with the `0x140f0f300/140f0f440` far writeback pair, the 0x138-stride snapshot differ/adopt, the per-object bitstream readers, the FourCC-tagged DOM-value codec `'Bool'/'ArrC/S/E'/'HndI/S/D'/'IDVd'/'NonI'/'ResV'` with 17 value kinds, the 0x20-stride in-window introsort, the 9th FNV-1a inline sighting with the `0x75F23B41` gates and the runtime-decoded `0x14387344c/414/440` key pages; 0 real holes / 0 offcuts — 96.0 % span; 0 XOR-8 strscan pages — the tenth; `FUN_1406232f0` ×104 the tier's #1 target); NEW T84-1 (the `0x140f0f300/140f0f440` far writeback pair's defs — `crossref.py 140f0f300`), T84-2 (the `'ResV'` compact-64 / `'HndI/S/D'` triple semantics — `dumpva.py 0x1438734a8 8`), T84-3 (the `0x140df1260` introsort comparator), T84-4 (the `0x14387344c/414/440` key pages' decoded content); T83-3/T83-4/T83-6/T83-7, T82-4/T82-5, T82-6 half, T81-3/T81-4/T81-5, T79-x, T78-3/T78-4 and the standing carried list unchanged.**
 **85→T84-3 CLOSED (`FUN_140df2850` = the generic public introsort over 0x20-stride records, comparator = param_3, the offcut `LAB_140df62b0`; the pass-84 `0x140df1260→0x140df2c38` "in-window" interior is its inlined emission at the call sites) + T84-1 half-closed (`FUN_140df5c20` calls `FUN_140f0f300` (mode 0, `entity→+0x280`) / `FUN_140f0f440` (mode 1) with real args — the mode-keyed position/value writeback; the family is 7+ far members `0x140f0f250/260/270/b60/bf0/cd0/fc90` + the `0x140f11xxx` bind family) + T84-4 half-answered (three more in-place key-page sets `0x1438734c8/4e0/568` — schema `{char[8] key, u24 len, byte gate, char[] payload}`) + T60-2 answered on the call side (the probe pair ×~20 sites, slots `0x2e/0x18/0x5a/0x20/2/5`) + ledger 103 (the radial-placement engine, the 11th widget wave, the 2nd-gen provider belt); NEW T85-1 the comparator's sort key + the placement DOM knobs (`dumpva.py 0x140df62b0 32`), T85-2 the `0x140f0fXXX`/`0x140f11xxx` far families (the placement widget's writeback/bind layer), T85-3 the `0x140ecxxx/0x140ed1xxx` eye/VFX band (12 in-range callers; `crossref.py 140ecd8e0`), T85-4 the `0x142069a20/9710/a2b0/afe0/a660/b500` render-math defs (T83-6's second consumer set; `crossref.py 142069a20`), T85-5 the id-0x133 watch table `_DAT_1439eb0d0/0d8` (`dumpva.py 0x1439eb0d0 16`); T84-2, T81-4, T83-3/T83-4/T83-6/T83-7, T82-4/T82-5, T82-6 half, T81-3/T81-5, T79-x, T78-3/T78-4 and the standing carried list unchanged.**
+**86→T59-3 shape-answered (the session-chain `0x18317a531d116c14/0c` bucket table is the tier's spine — ~60 verbatim consumer sites; defs still `func_0x…`) + T85-3 grows (the LOS/eye band's full call-signature ladder read consumer-side) + T75-3 half-answered (`DAT_14415fbe0`'s first two in-range consumers: int-key `func_0x000141c576a0` + float-key `func_0x000141c57670`) + the pass-69 compressed-bitset trie's per-provider walkers read (`FUN_140e1d790`/`FUN_140e33260`); NEW T86-1 the `0x18317a531d116c0c` table writer (`crossref.py 18317a531d116c0c`), T86-2 the easing library's trig tails `FUN_1426cd3d0/cd8d0/dfc8/cea00` (`crossref.py 1426cd3d0`), T86-3 the `|0x790000000000000` container family + its `0x142d3b0xx` getter sub-family (`crossref.py 142d3b100`), T86-4 the `0xde0000000004981` default-tag namespace (`crossref.py de0000000004981`); new tiers named in-band: the 4-arg easing/interp library (`0x140e1adc0–0x140e1c590`, 14 bodies) and the `|0x79…` DOM container `+0x1d8..+0x228` int-pair schema; 0 holes / 0 offcuts; 0 XOR-8 pages (second zero pass) + the fifth `0x14387344c`-family key page `0x143873580` read raw; the range max `FUN_140e31760` is a no-namer window host (8.8% of corpus max).**
 ## Next pass
 Resume range: **`NEXT.txt`** (generated from `state.json` + `--max`; regenerate after
-every `--update`, never hand-edit). Pass 85 ends **on an entry boundary** at `0x140e0ced0`
-(stratum `0x14054fea0` OPEN; the range-max window host `FUN_140e0ced0` read to its end —
-its 48 far stamps land in the next band). Next: chunks `0757`–`0769`, `.text`
-`0x140e0dc10`–`0x140e4e390` (1,494,729 B post-strip).
-Watch for: (a) **the `0x140e0e`–`0x140e4b468` far-stamp band** the pass-85 window hosts
-re-emit (the gap report's `window reach:` #3 `FUN_140e0ced0` + the `FUN_140e0a010/0a700/
-07110` interiors `0x140e233e4`/`0x140e2598c`/`0x140e25a0c`/`0x140e2c2a7…0x140e2c697`/
-`0x140e4b380…468`; the `FUN_140db0870` stencil and T84-1's `0x140f0fXXX` pair land here);
-(b) **T85-1** the comparator's sort key (`dumpva.py 0x140df62b0 32`); (c) T85-3 the
-`0x140ecxxx/0x140ed1xxx` eye/VFX band defs, T85-4 the `0x14206…` render-math defs,
-T85-5 the id-0x133 watch table (`dumpva.py 0x1439eb0d0 16`); (d) T84-2 (`dumpva.py
-0x1438734a8 8` — the width-ladder table), T81-4 (the 13-tag RTTI ladder's last two tags —
-`crossref.py 1440f5600`), T83-3/T83-4/T83-6/T83-7, T82-4/T82-5/T82-6, T79-2/3/4/5,
-T78-3/T78-4, T77-3/T77-5, T76-2/T76-3, T75-1/T75-5, T74-2..5 and the standing carried
-list carry with no new evidence.
+every `--update`, never hand-edit). Pass 86 ends **on an entry boundary** at
+`0x140e3ce90` (the provider tier OPEN; the range-max window host
+`FUN_140e31760` and the two other giants `FUN_140e14b80`/`FUN_140e3bda0`
+are single-entry window hosts whose far stamps land in the next band).
+Next: chunks `0766`–`0777`, `.text`
+`0x140e3d190`–`0x140e70720` (1,520,320 B post-strip).
+Watch for: (a) **the `0x140e3e…`–`0x140e70720` far-stamp band** the pass-86
+window hosts re-emit (the gap report's `window reach:` #1 `FUN_140e35db0`
++284,924 B → `0x140e7b6ac` (15 stamps), #2 `FUN_140e1e610` → `0x140e3e145`
+(4), #3 `FUN_140e2c1a0` → `0x140e4b40a` (7); the `FUN_140e3bda0` interior
+`0x140e3c1xx` stamps and the `0x140e4b1a0/0x140e4b162` jump-outs land here);
+(b) **T86-1** the session-chain table writer (`crossref.py 18317a531d116c0c`);
+(c) T86-2 the easing trig tails, T86-3 the `|0x79…` container getter defs,
+T86-4 the `0xde…` default tags; (d) T85-3 the LOS/eye band defs, T85-2 the
+`0x140f0fXXX`/`0x140f11xxx` far families, T85-1 the comparator key
+(`dumpva.py 0x140df62b0 32`); T84-2, T75-3, T69's trie defs (`crossref.py
+141aef680`), and the standing carried list carry with no new evidence.
 Do not re-run a counted range through `--update` (ledger 5); never treat
 `0x826e…`/`0xca334801`/`0x4343ffa4`-family, `0x141baffa2`, `0x82bd1143` (T80-3) or
 offcut-call addresses as data (ledgers 20/66/67/87); ledgers 24/31/39/43/44/47/49/53/57/58/60/61/62/63/64/66/67/68/69/71/72/73/76/77/78/79/80/81/83/84/85/87/88/89/90/91/92/93/94/95/96/97/98/99/100/101/102/**103** for gaps, windows,
