@@ -3,6 +3,7 @@
 
 usage: python scripts/strscan.py chunks/chunk_0267.txt [window] [--all]
        python scripts/strscan.py --x8 295 306       # per-pass XOR-8 page name list
+       python scripts/strscan.py --inplace 744 758 # per-pass in-place key-page census
 
 Prints one line per distinct address that has a pool page nearby, so `DAT_`/`uRam_`
 name pages become readable while reading a chunk. Stripped pages carry their recovered
@@ -19,6 +20,13 @@ exact. Pages whose text is not printable have no row and print `(no pool row)`.
 One chunk past `last` is scanned when it exists: a band is shared across chunks, so a page
 the last chunk's functions reference can first decode in the next chunk's loop. Those rows
 keep their own `chunk_` number and the header says `+ look-ahead`.
+
+`--inplace FIRST [LAST]` censuses the other record layout: `{char key[8], u24 len, byte gate,
+char payload[]}` decoded in place by `(&payload)[i] ^= key[i & 7]`. The key operand names the
+page base, so both emitters are seen -- `(&DAT_<base>)[..]` and `*(byte *)(.. + <base>)` -- and
+each page resolves at `base + 8` like a pool row. This is how the `0x1438734xx/5xx` family is
+censused: the five `(&DAT_<base>)` members (`408/440/4e0/568/580`) are `--x8`-invisible; only
+`0x1438734c8` uses the `*(byte *)` form.
 
 The trailing summary says why the rest did not resolve. Most addresses in a chunk are
 never strings: `.text` mentions are code, and `.data BSS` is the section's virtual tail
@@ -42,6 +50,11 @@ from strlookup import load, region, show  # noqa: E402
 RX = re.compile(r"(?<![0-9a-fA-F])(14[0-9a-fA-F]{7})(?![0-9a-fA-F])")
 # XOR-8 page key base in the inlined decrypt loop: `... & 7) + 0x143853c10)`.
 X8 = re.compile(r"& 7\) \+ (0x[0-9a-f]{7,9})")
+# In-place record decrypt, either emitter: `(&payload)[i] = (&payload)[i] ^ (&key)[i & 7]`
+# or `... ^ *(byte *)((ulonglong)(i & 7) + key)`.  pay, pay, key-lit, key-imm.
+INPLACE = re.compile(
+    r"\(&DAT_([0-9a-f]+)\)\[[^\]]+\]\s*=\s*\(&DAT_([0-9a-f]+)\)\[[^\]]+\]\s*\^\s*"
+    r"(?:\(&DAT_([0-9a-f]+)\)|\*\(byte \*\)\(\(ulonglong\)[^+\n]*\+\s*(?:0x)?([0-9a-f]+)\))")
 HDR = re.compile(r"(?m)^// ([0-9a-f]{16})_")
 
 
@@ -74,6 +87,40 @@ def x8_report(lo, hi):
 
     named = sum(1 for base in seen if base + 8 in rows)
     print("== XOR-8 pages, chunks %04d-%04d%s =="
+          % (lo, hi, " + look-ahead" if stop > hi else ""))
+    for base in sorted(seen):
+        n, func = seen[base]
+        row = rows.get(base + 8)
+        print("0x%X  %-48s  chunk_%04d  FUN_%x"
+              % (base, show(*row) if row else "(no pool row)", n, func))
+    print("%d pages, %d named, %d without a pool row"
+          % (len(seen), named, len(seen) - named), file=sys.stderr)
+    return 0
+
+
+def inplace_report(lo, hi):
+    """One line per in-place key page referenced in chunks lo..hi (+1 look-ahead)."""
+    rows = {r[0]: r[1:] for r in load()}
+    chunks = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "chunks")
+    stop = hi + 1 if os.path.exists(os.path.join(chunks, "chunk_%04d.txt" % (hi + 1))) else hi
+    seen = {}
+    for n in range(lo, stop + 1):
+        with open(os.path.join(chunks, "chunk_%04d.txt" % n), encoding="utf-8",
+                  errors="replace") as fh:
+            body = fh.read()
+        heads = [(m.start(), int(m.group(1), 16)) for m in HDR.finditer(body)]
+        pos = [h[0] for h in heads]
+        for m in INPLACE.finditer(body):
+            base = page_base(m.group(3) or m.group(4))
+            if base is None:
+                continue
+            pay = int(m.group(1), 16)
+            assert pay == base + 0xc or pay + 0x140000000 == base + 0xc
+            i = bisect.bisect_right(pos, m.start()) - 1
+            seen.setdefault(base, (n, heads[i][1] if i >= 0 else 0))
+
+    named = sum(1 for base in seen if base + 8 in rows)
+    print("== in-place key pages, chunks %04d-%04d%s =="
           % (lo, hi, " + look-ahead" if stop > hi else ""))
     for base in sorted(seen):
         n, func = seen[base]
@@ -130,6 +177,13 @@ if __name__ == "__main__":
             raise SystemExit(2)
         lo = int(rest[0])
         raise SystemExit(x8_report(lo, int(rest[1]) if len(rest) > 1 else lo))
+    if len(sys.argv) > 1 and sys.argv[1] == "--inplace":
+        rest = sys.argv[2:]
+        if not rest or not rest[0].isdigit():
+            print(__doc__)
+            raise SystemExit(2)
+        lo = int(rest[0])
+        raise SystemExit(inplace_report(lo, int(rest[1]) if len(rest) > 1 else lo))
     if len(sys.argv) < 2:
         print(__doc__)
         raise SystemExit(2)
