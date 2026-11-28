@@ -6,9 +6,10 @@ Three sources, one address-keyed map:
   pool     the decoded XOR name pages (`strpool.tsv`), referenced from a chunk as
            `&DAT_<base>` (page key = base+8), `_DAT_<key>` (the 8-byte header) or
            any byte inside the payload.  One row per page.
-  rdata    plaintext `.rdata` strings (`rdata_names.tsv`), referenced by their exact
-           address or through a `PTR_s_<name>_<addr>` / `PTR_u_<name>_<addr>` pointer
-           (one qword deref, read through `img.py` when the image/slices are present).
+  rdata    plaintext `.rdata` strings, referenced by their exact address or through a
+           `PTR_s_<name>_<addr>` / `PTR_u_<name>_<addr>` pointer (one qword deref, read
+           through `img.py` when the image/slices are present).  This table has no file of
+           its own: it is stored as the rdata rows of `strings_index.tsv`.
   literal  C string literals the decompiler printed inline (`"..."`, `L"..."`), with
            their function, plus the `.rdata` row(s) whose text and kind match exactly.
 
@@ -56,7 +57,6 @@ except ImportError:  # pragma: no cover
     img = None
 
 SRC_POOL = os.path.join(ROOT, "strpool.tsv")
-SRC_RDATA = os.path.join(ROOT, "rdata_names.tsv")
 OUT_INDEX = os.path.join(ROOT, "strings_index.tsv")
 OUT_LITERALS = os.path.join(ROOT, "strings_literals.tsv")
 OUT_REFS = os.path.join(ROOT, "strings_refs.tsv")
@@ -68,6 +68,10 @@ RX_HDR = re.compile(r"(?m)^// ([0-9a-f]{16})_")
 # C literal; \\ escapes are consumed here, decoded later.  A raw newline cannot occur.
 RX_LIT = re.compile(r'(L?)"((?:[^"\\\n]|\\.)*)"')
 PTR_PRE = ("PTR_s_", "PTR_u_")
+RX_RASC = re.compile(rb"[\x09\x0a\x0d\x20-\x7e]{4,}\x00")
+RX_RU16 = re.compile(rb"(?:[\x09\x0a\x0d\x20-\x7e]\x00){4,}\x00\x00")
+INDEX_HDR = ["addr", "source", "section", "kind", "name", "hits", "ptr", "lit",
+             "funcs", "first_chunk", "first_func", "text"]
 ESC = {"a": "\a", "b": "\b", "f": "\f", "n": "\n", "r": "\r", "t": "\t",
        "v": "\v", "0": "\0", "\\": "\\", '"': '"', "'": "'"}
 
@@ -150,10 +154,53 @@ def deref_addr(addr):
     return struct.unpack("<Q", raw)[0] if raw and len(raw) == 8 else None
 
 
+def load_rdata():
+    """`.rdata` plaintext rows as (addr, text, kind, "", ""), strlookup.load() shape.
+
+    Re-read from `.rdata` when the image is reachable; the committed slices hold only the
+    VAs a record cites, not the whole 5.7 MB section. On a bare clone the rows come from
+    the index being rebuilt -- they are 100% of `strings_index.tsv`'s rdata rows, so the
+    table survives a full rescan without a second copy on disk.
+    """
+    s = img.section(".rdata") if img is not None else None
+    blob = img.read(s[0], s[2]) if s else None
+    if blob:
+        rows = []
+        for m in RX_RASC.finditer(blob):
+            raw = m.group()[:-1]
+            if sum(1 for b in raw if 0x20 <= b <= 0x7E) < 4:
+                continue
+            kind = "ascii" if all(0x20 <= b <= 0x7E for b in raw) else "cstring"
+            rows.append((s[0] + m.start(), raw.decode("latin1"), kind))
+        for m in RX_RU16.finditer(blob):
+            txt = m.group()[:-2].decode("utf-16le")
+            if sum(1 for c in txt if 0x20 <= ord(c) <= 0x7E) < 4:
+                continue
+            rows.append((s[0] + m.start(), txt, "utf16"))
+        rows.sort(key=lambda r: r[0])
+        return [(a, t, k, "", "") for a, t, k in rows]
+    if not os.path.exists(OUT_INDEX):
+        print("no .rdata bytes and no %s -- rdata rows unavailable" % OUT_INDEX,
+              file=sys.stderr)
+        return []
+    print(".rdata not readable -- inheriting the rdata rows of %s" % OUT_INDEX,
+          file=sys.stderr)
+    rows = []
+    with open(OUT_INDEX, encoding="utf-8", errors="replace") as fh:
+        fh.readline()
+        for line in fh:
+            p = line.rstrip("\n").split("\t")
+            if len(p) != len(INDEX_HDR) or p[1] != "rdata":
+                continue
+            # the text column only holds \\, \t, \n, \r escapes (the extraction byte class)
+            rows.append((int(p[0], 16), strlookup.unescape(p[11]), p[3], "", ""))
+    return rows
+
+
 def scan():
     pool = strlookup.load(SRC_POOL)
     pkeys = [r[0] for r in pool]
-    rdata = strlookup.load(SRC_RDATA)
+    rdata = load_rdata()
     rmap = {r[0]: r for r in rdata}
     rtext = collections.defaultdict(list)
     rkind = {}
@@ -244,7 +291,7 @@ def scan():
 
 def write(index, lit, refs, deltas, lit_addrs):
     with open(OUT_INDEX, "w", encoding="utf-8", newline="\n") as fh:
-        fh.write("# addr\tsource\tsection\tkind\tname\thits\tptr\tlit\tfuncs\tfirst_chunk\tfirst_func\ttext\n")
+        fh.write("# " + "\t".join(INDEX_HDR) + "\n")
         for a in sorted(index):
             r = index[a]
             first = r["first"] or ("", "")
@@ -359,8 +406,7 @@ def need_outputs():
 
 def cmd_find(rx):
     need_outputs()
-    idx = read_tsv(OUT_INDEX, ["addr", "source", "section", "kind", "name", "hits",
-                               "ptr", "lit", "funcs", "first_chunk", "first_func", "text"])
+    idx = read_tsv(OUT_INDEX, INDEX_HDR)
     lit = read_tsv(OUT_LITERALS, ["wide", "hits", "funcs", "first_chunk", "first_func",
                                   "rdata_addr", "text"])
     pat = re.compile(rx, re.IGNORECASE)
@@ -383,8 +429,7 @@ def cmd_find(rx):
 def cmd_addr(arg):
     need_outputs()
     a = int(arg, 16)
-    idx = read_tsv(OUT_INDEX, ["addr", "source", "section", "kind", "name", "hits",
-                               "ptr", "lit", "funcs", "first_chunk", "first_func", "text"])
+    idx = read_tsv(OUT_INDEX, INDEX_HDR)
     for row in idx:
         if int(row[0], 16) == a:
             print("\t".join(row))
@@ -428,6 +473,7 @@ def selftest():
     assert chunks == 2228 and funcs == 119757, (chunks, funcs)
     assert index[0x1438734D0]["text"] == "No Failure"
     assert index[0x1438734D0]["hits"] > 0
+    assert sum(1 for r in index.values() if r["source"] == "rdata") == 16832
     assert any(k[0] == 0x1438734D0 and k[1] == 749 for k in refs)
     assert index[0x143051000]["text"] == "Overview"
     assert index[0x143051000]["ptr"] > 0

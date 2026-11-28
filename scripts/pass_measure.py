@@ -387,14 +387,12 @@ def main():
         print(json.dumps(out, indent=1, sort_keys=True))
         return
     state = {'passes': [], 'totals': collections.Counter(), 'reg_hashes': set(),
-             'record_rows': [], 'targets': set(), 'max_text': None}
+             'max_text': None}
     if os.path.exists(STATE) and mode != 'init':
         s = load_state()
         state['reg_hashes'] = set(s.get('reg_hashes', []))
-        state['record_rows'] = s.get('record_rows', [])
         state['passes'] = s.get('passes', [])
         state['totals'] = collections.Counter(s.get('totals', {}))
-        state['targets'] = set(s.get('targets', []))
         state['max_text'] = s.get('max_text')
 
     # record-hash match against all known registration hashes (cross-pass)
@@ -411,10 +409,6 @@ def main():
 
     # merge into state
     state['reg_hashes'] = sorted(set(state['reg_hashes']) | set(m['reg_hashes']))
-    state['targets'] = sorted(state['targets'] | set(m['targets']))
-    for r in m['records']:
-        state['record_rows'].append({'chunk_hi': hi, **r,
-                                     'matched': r['hash'] in known})
     if mode == 'update':
         state['passes'].append({
             'chunks': [lo, hi], 'range': '%s-%s' % (m['first'], m['last']),
@@ -442,7 +436,6 @@ def main():
         state['max_text'] = {'bytes': top[0], 'addr': top[1], 'name': top[2], 'chunk': top[3]}
     write_state({'next_chunk': state['next_chunk'], 'passes': state['passes'],
                  'totals': dict(state['totals']), 'reg_hashes': state['reg_hashes'],
-                 'record_rows': state['record_rows'], 'targets': state['targets'],
                  'max_text': state['max_text']})
     print('[state.json] next_chunk=%d  totals: %s' % (state['next_chunk'], dict(state['totals'])))
 

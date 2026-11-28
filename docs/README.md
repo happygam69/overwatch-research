@@ -44,8 +44,9 @@ evidence. They have no line budget because they are not part of the pass loop.
   should not be used as premises without checking the cited record.
 - The per-pass records are the evidence base. Every page links the records that support
   its statements. `CODE_MAP.md` is the cumulative index; `state.json` is the machine
-  ledger behind every cumulative number. The corrections ledger in `CODE_MAP.md`
-  supersedes prose in older records when they disagree.
+  ledger behind every cumulative number. The corrections ledger in `SYNTHESIS.md`
+  supersedes prose in older records when they disagree (same milestone-only contract as
+  these pages).
 - Pass records quote `scripts/pass_measure.py` output or its `--json` digest. Do not
   re-type those blocks. If a number is needed, quote the record or `state.json`.
 

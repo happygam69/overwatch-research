@@ -6,7 +6,8 @@ leave one detailed record per pass. Nothing skipped, nothing sampled.
 ## Source
 
 Everything a pass needs is in this repo: `chunks/` (the corpus), `index.json`, `state.json`,
-`strpool.tsv` (the decoded string pool, ledger 29), `rdata_names.tsv`, and `image/` (the
+`strpool.tsv` (the decoded string pool, ledger 29), `strings_*.tsv` (address→text→function,
+`.rdata` plaintext included), and `image/` (the
 image bytes records quote — below). The decompiler output (`corpus/b5120..b5167`, 119,757
 `.c` files) and `tools/flood_build.py` that repacked them into `chunks/chunk_NNNN.txt` are
 provenance only: no script here reads them.
@@ -34,16 +35,15 @@ address. `../../tools/flood_build.py` repacks them into `chunks/chunk_NNNN.txt`:
 function-aligned, ~128 KiB raw each, ordered by entry address.
 **The byte-identical one-line `/* WARNING: Removing unreachable block … */` comments
 were stripped from the chunk bodies on 2026-11-21** (`../../tools/flood_strip.py`; 668,998
-lines / 42.1 MB; per-chunk `raw_bytes`/`dropped_lines` in `index.json`; pre-strip index
-kept as `index.pre_strip.json`). Chunk names, boundaries and every code line are
-unchanged — no read-state was affected.
+lines / 42.1 MB; per-chunk `raw_bytes`/`dropped_lines` in `index.json`). Chunk names,
+boundaries and every code line are unchanged — no read-state was affected.
 
     files 119757  chunks 2228  raw bytes 325787798  post-strip bytes 283641800
 
 `index.json` → per chunk: byte count, first/last `// <addr>_FUN_<addr>`.
 That index is the source of truth for coverage; never count by eye.
 `state.json` → machine ledger: `next_chunk`, per-pass entries, cumulative
-totals, all registration hashes, all `{id,hash}` rows. Never hand-accumulate numbers.
+totals, all registration hashes, `max_text`. Never hand-accumulate numbers.
 `scripts/pass_next.py` → range picker: start chunk (or `state.json.next_chunk`) + `--max` KiB
 cap (default 1200) → printed chunk range, `.text` range, `pass_measure.py` command, record
 path — and writes the same block to `NEXT.txt`, the file `CODE_MAP.md` points at for the
@@ -98,7 +98,9 @@ the script, not a remembered chunk count. You have a
 1 million-token context in total for the whole session.
 
 0. **Before the pass**, read `CODE_MAP.md` in full, plus the most recent record in
-   `ranges/`. Update both after the pass.
+   `ranges/`. Update both after the pass. `SYNTHESIS.md` (corrections ledger + cumulative
+   synthesis) is read at milestones and on demand, the same contract as `docs/` — do not
+   read it before an ordinary pass, and do not copy it back into `CODE_MAP.md`.
 1. Read every chunk in the printed range completely (or stop at a stated boundary and say so).
 2. Run `python scripts/pass_measure.py <first> <last>` from this repo root and read its output
    alongside the chunks — it is the index to what was read (headline numbers, class and
@@ -123,8 +125,9 @@ the script, not a remembered chunk count. You have a
    `python scripts/img.py export --cited ranges/<record>.md` so every byte the record
    quotes stays readable from the repo alone.
 5. Run `python scripts/pass_measure.py <first> <last> --update` to merge the pass into
-   `state.json`, then update `CODE_MAP.md`: coverage row, corrections/synthesis only if
-   something structural changed, open threads, next-pass watch items. The resume range is
+   `state.json`, then update `CODE_MAP.md`: coverage row, open threads, next-pass watch
+   items. A structural change (new ledger entry, revised synthesis) goes in `SYNTHESIS.md`
+   instead, and only then. The resume range is
    `NEXT.txt`: regenerate it with `python scripts/pass_next.py` after `--update`, never
    hand-edit it. Cumulative numbers in `CODE_MAP.md` come from `state.json` totals — never
    hand-added.
@@ -171,7 +174,8 @@ Do **not** guess how much context is used — the guess is wrong, usually badly.
 is reported externally (harness usage counter); ask for it or be told. Planning a pass on
 a guessed figure is how a pass gets cut in half.
 
-Fixed overhead per pass: `CODE_MAP.md` (≤300 lines, ~6K tokens) + one record (~5K) +
+Fixed overhead per pass: `CODE_MAP.md` (≤150 lines since the `SYNTHESIS.md` split) + one
+record (~5K) +
 the pass's chunks (the printed range, up to the `--max` cap) + room to write the new record. When the ceiling is
 reached mid-pass: stop at a chunk boundary, write the read-state table (which chunks
 read, which pending), and stop. Never burn the remaining budget on a partial chunk that
@@ -179,12 +183,16 @@ leaves no room to write the record.
 
 ## Cumulative index
 
-`CODE_MAP.md` (this directory) is the single cumulative index; it is kept to a hard
-≤300-line budget: coverage, corrections ledger, synthesis, one-line conventions, open
-threads, next-pass instructions. Per-pass narrative, highlights and method notes live
-only in `ranges/`. `state.json` is the machine ledger behind every cumulative number.
+`CODE_MAP.md` (this directory) is the cumulative index; it is kept to a hard ≤150-line
+budget: files, coverage, one-line conventions, open threads, next-pass instructions.
+`SYNTHESIS.md` holds the corrections ledger and the cumulative synthesis under the same
+contract as `docs/` — read at milestones and on demand, never before an ordinary pass —
+and its ledger numbers are the stable citation ids records use (`Corrections 47`,
+`ledger 75`), so entries are never renumbered. Per-pass narrative, highlights and method
+notes live only in `ranges/`. `state.json` is the machine ledger behind every cumulative
+number.
 The long-form map through pass 15 is preserved in `CODE_MAP_ARCHIVE.md`. The reader-facing
-prose findings live in `docs/` and are not part of this budget; see `docs/README.md`.
+prose findings live in `docs/` and are not part of either budget; see `docs/README.md`.
 
 Corpus: 325,787,798 raw index bytes → 283,641,800 post-strip; `.text` 42,864,695 B;
 119,757 functions; 2,228 chunks (`index.json`).
